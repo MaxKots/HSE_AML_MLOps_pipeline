@@ -1,0 +1,8 @@
+/artifacts/metrics/
+/artifacts/models/
+/artifacts/predictions/
+/artifacts/reports/
+/artifacts/shap/
+/mlruns
+/data/raw/
+.venv/

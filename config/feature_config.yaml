@@ -1,0 +1,42 @@
+features:
+  categorical:
+    - payment_type
+    - employment_status
+    - housing_status
+    - source
+    - device_os
+
+  binary:
+    - email_is_free
+    - phone_home_valid
+    - phone_mobile_valid
+    - has_other_cards
+    - foreign_request
+    - keep_alive_session
+
+  numerical:
+    - income
+    - name_email_similarity
+    - prev_address_months_count
+    - current_address_months_count
+    - customer_age
+    - days_since_request
+    - intended_balcon_amount
+    - zip_count_4w
+    - velocity_6h
+    - velocity_24h
+    - velocity_4w
+    - bank_branch_count_8w
+    - date_of_birth_distinct_emails_4w
+    - credit_risk_score
+    - bank_months_count
+    - proposed_credit_limit
+    - session_length_in_minutes
+    - device_distinct_emails_8w
+    - device_fraud_count
+    - month
+
+engineered:
+  create_time_features: true
+  create_velocity_features: true
+  create_interaction_features: true

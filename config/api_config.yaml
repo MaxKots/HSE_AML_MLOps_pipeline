@@ -1,0 +1,6 @@
+api:
+  service_name: aml-scoring-api
+  version: 1.0.0
+  recommendation_thresholds:
+    red: 0.80
+    yellow: 0.50

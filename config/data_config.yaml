@@ -1,0 +1,20 @@
+dataset:
+  target_column: fraud_bool
+  id_columns: []
+  drop_columns: []
+
+split:
+  train_size: 0.7
+  valid_size: 0.15
+  test_size: 0.15
+  shuffle: false
+
+drift:
+  numerical_drift_threshold: 0.1
+  share_of_drifted_columns_threshold: 0.3
+  stattest: psi
+
+sources:
+  base_dataset_path: data/raw/Base.csv
+  drift_dataset_path_1: data/raw/Variant I.csv
+  drift_dataset_path_2: data/raw/Variant II.csv
