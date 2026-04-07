@@ -1,8 +1,21 @@
+# Все артефакты
 /artifacts/metrics/
 /artifacts/models/
 /artifacts/predictions/
 /artifacts/reports/
 /artifacts/shap/
-/mlruns
+
+# Логи прогонов
+/mlruns/
+
+# Данные
 /data/raw/
+/data/processed/
+/data/reference/
+
+# Окружение
 .venv/
+
+# Скомпилированное
+__pycache__/
+*.pyc
