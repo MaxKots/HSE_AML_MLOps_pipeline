@@ -155,7 +155,7 @@ Airflow используется для запуска и мониторинга
 
 ## Эксперименты в MLflow
 
-MLflow используется для логирования run'ов, параметров, метрик и артефактов моделей.
+MLflow используется для логирования запусков, параметров, метрик и артефактов моделей.
 
 ![mlflow](https://github.com/MaxKots/HSE_AML_MLOps_pipeline/blob/main/.assets/3.jpg)
 
@@ -197,7 +197,7 @@ python scripts/run_api.py
 python scripts/run_dashboard.py
 ```
 
-Проверка Airflow DAG'ов:
+Проверка Airflow DAG:
 
 ```bash
 docker-compose exec airflow-webserver airflow dags list
