@@ -1,23 +1,19 @@
 # AML Pipeline
 
-Сквозной MLOps-пайплайн для выявления сомнительных финансовых операций.
+Сквозной MLOps-проект для выявления сомнительных финансовых операций.
 
-Проект реализует полный жизненный цикл ML-модели для задачи AML: загрузку и валидацию данных, feature engineering, обучение моделей, интерпретацию решений, мониторинг дрейфа, serving через REST API и визуализацию результатов в интерактивном дашборде.
+Проект покрывает полный жизненный цикл ML-решения:
+- загрузку и валидацию данных;
+- feature engineering;
+- обучение моделей;
+- логирование экспериментов в MLflow;
+- интерпретацию через SHAP;
+- мониторинг дрейфа;
+- REST API для инференса;
+- Streamlit dashboard;
+- оркестрацию пайплайнов через Apache Airflow.
 
-## Основные возможности
-
-- загрузка данных из локальных файлов;
-- валидация схемы и контроль корректности входных данных;
-- feature engineering для табличных транзакционных данных;
-- обучение моделей LightGBM и XGBoost;
-- логирование экспериментов и метрик в MLflow;
-- локальная и глобальная интерпретация решений с помощью SHAP;
-- мониторинг дрейфа данных с помощью Evidently;
-- online и batch scoring через FastAPI;
-- визуализация результатов и explanations в Streamlit dashboard;
-- оркестрация пайплайнов через Apache Airflow.
-
-## Технологический стек
+## Стек
 
 - Python 3.10+
 - Pandas, NumPy, scikit-learn
@@ -32,213 +28,206 @@
 - PostgreSQL
 - MinIO
 
-## Структура проекта
+## Архитектура и общий процесс
 
 ![schema](https://github.com/MaxKots/HSE_AML_MLOps_pipeline/blob/main/.assets/schema.svg)
 
+## Что делает проект
+
+- загружает AML-датасеты из локальных файлов;
+- проверяет корректность схемы и целевой колонки;
+- строит дополнительные признаки для транзакционных данных;
+- обучает модели LightGBM и XGBoost;
+- сохраняет артефакты моделей и метрик;
+- логирует эксперименты в MLflow;
+- строит SHAP-объяснения;
+- считает drift-отчёты;
+- предоставляет online и batch scoring через API;
+- визуализирует результаты в dashboard;
+- запускает training workflow через Airflow DAG'и.
+
+## Структура проекта
+
+```text
+config/        конфиги проекта
+data/raw/      исходные датасеты
+data/processed/обработанные данные
+src/           основной код
+scripts/       точки запуска
+dags/          DAG'и Airflow
+artifacts/     модели, метрики, отчёты, predictions, SHAP
+logs/          логи сервисов и Airflow
+docker/        docker-init и служебные файлы
+```
+
 ## Входные данные
 
-Для локального запуска необходимо поместить датасеты в директорию `data/raw/`:
+Для запуска необходимо положить в `data/raw/` следующие файлы:
 
 - `Base.csv`
 - `Variant I.csv`
 - `Variant II.csv`
 
-Используемый target-признак:
+Целевая колонка:
+
 - `fraud_bool`
 
-## Рекомендуемый локальный запуск через venv
+## Быстрый старт
 
-### 1. Создание виртуального окружения
+Подробная инструкция находится в файле `SETUP.md`.
 
-Linux / macOS:
+Если нужен полный пошаговый гайд по:
+- virtual environment;
+- Docker Compose;
+- Airflow;
+- MLflow;
+- проверке работы;
+- очистке проекта;
+
+смотри `SETUP.md`.
+
+## Локальный запуск через venv
+
+Создание окружения:
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 ```
 
-Windows PowerShell:
-
-```powershell
-python -m venv .venv
-.venv\Scripts\Activate.ps1
-```
-
-### 2. Обновление pip-инструментов
+Установка зависимостей:
 
 ```bash
-python -m pip install -upgrade pip setuptools wheel
-```
-
-### 3. Установка зависимостей
-
-```bash
+python -m pip install --upgrade pip setuptools wheel
 pip install -r requirements.txt
 ```
 
-### 4. Подготовка датасетов
-
-Разместить файлы:
-
-```text
-data/raw/Base.csv
-data/raw/Variant I.csv
-data/raw/Variant II.csv
-```
-
-## Пошаговый запуск пайплайна
-
-### Проверка данных
+Базовые команды:
 
 ```bash
 python scripts/run_data_check.py
-```
-
-### Генерация признаков
-
-```bash
 python scripts/run_feature_engineering.py
-```
-
-### Обучение модели
-
-```bash
 python scripts/run_train.py
-```
-
-### Проверка дрейфа
-
-```bash
 python scripts/run_drift_check.py
-```
-
-### Генерация SHAP-объяснений
-
-```bash
 python scripts/run_explain.py
-```
-
-### Запуск benchmark-экспериментов
-
-```bash
-python scripts/run_benchmark.py
-```
-
-## Запуск API
-
-```bash
 python scripts/run_api.py
-```
-
-После запуска документация API будет доступна по адресу:
-
-```text
-http://localhost:8000/docs
-```
-
-![streamlit](https://github.com/MaxKots/HSE_AML_MLOps_pipeline/blob/main/.assets/1.jpg)
-
-Доступные основные эндпоинты:
-
-- `/health`
-- `/ready`
-- `/predict`
-- `/predict_batch`
-
-## Запуск dashboard
-
-В отдельном терминале с активированным тем же `venv`:
-
-```bash
 python scripts/run_dashboard.py
-```
-
-После запуска dashboard будет доступен по адресу:
-
-```text
-http://localhost:8501
-```
-
-## Запуск тестов
-
-```bash
-pytest -q
-```
-
-## Запуск через Makefile
-
-```bash
-make data-check
-make features
-make train
-make drift
-make explain
-make api
-make dashboard
-make benchmark
 ```
 
 ## Запуск через Docker Compose
 
-Базовая контейнерная инфраструктура:
+Базовый запуск инфраструктуры:
 
 ```bash
-docker compose up -build
+docker-compose up -d
 ```
 
-В контейнерном режиме могут быть доступны:
+Если используется Airflow, в файле `.env` должна быть задана переменная:
+
+```env
+AIRFLOW_UID=1000
+```
+
+Если ваш UID на Linux отличается, замените `1000` на результат команды:
+
+```bash
+id -u
+```
+
+Это нужно для корректной работы контейнеров Airflow с примонтированными локальными директориями и чтобы не возникали ошибки прав доступа.
+
+Типовые адреса сервисов:
 
 - MLflow: `http://localhost:5000`
 - Airflow: `http://localhost:8080`
-- API: `http://localhost:8000`
+- API: `http://localhost:8000/docs`
 - Dashboard: `http://localhost:8501`
+
+## Интерфейс dashboard
+
+![streamlit](https://github.com/MaxKots/HSE_AML_MLOps_pipeline/blob/main/.assets/1.jpg)
+
+## Оркестрация в Airflow
+
+Airflow используется для запуска и мониторинга DAG'ов пайплайна, включая training workflow.
+
+![airflow](https://github.com/MaxKots/HSE_AML_MLOps_pipeline/blob/main/.assets/2.jpg)
+
+## Эксперименты в MLflow
+
+MLflow используется для логирования run'ов, параметров, метрик и артефактов моделей.
+
+![mlflow](https://github.com/MaxKots/HSE_AML_MLOps_pipeline/blob/main/.assets/3.jpg)
 
 ## Основные артефакты
 
 После выполнения пайплайна сохраняются:
 
-- обработанные датасеты в `data/processed/`;
-- отчёты по дрейфу в `artifacts/reports/`;
-- feature spec в `artifacts/metrics/feature_spec.yaml`;
-- training summary в `artifacts/metrics/training_summary.json`;
-- benchmark results в `artifacts/metrics/benchmark_results.csv`;
-- model bundles в `artifacts/models/`;
-- SHAP-артефакты в `artifacts/shap/`;
-- prediction logs в `artifacts/predictions/`.
+- обработанные датасеты: `data/processed/`
+- drift-отчёты: `artifacts/reports/`
+- feature spec: `artifacts/metrics/feature_spec.yaml`
+- training summary: `artifacts/metrics/training_summary.json`
+- model bundles: `artifacts/models/`
+- SHAP-артефакты: `artifacts/shap/`
+- prediction logs: `artifacts/predictions/`
 
-## Назначение основных scripts
+## Основные сценарии
 
-- `run_data_check.py` — проверка загрузки и валидации данных;
-- `run_feature_engineering.py` — построение engineered features;
-- `run_train.py` — запуск training pipeline;
-- `run_drift_check.py` — запуск drift monitoring;
-- `run_explain.py` — генерация SHAP-объяснений;
-- `run_api.py` — запуск FastAPI сервиса;
-- `run_dashboard.py` — запуск Streamlit dashboard;
-- `run_benchmark.py` — запуск серии экспериментов;
-- `promote_model.py` — перевод версии модели в Production в MLflow Registry.
+Проверка данных:
 
-## Практические рекомендации
+```bash
+python scripts/run_data_check.py
+```
 
-Рекомендуемый порядок локальной отладки:
+Обучение:
 
-1. `run_data_check.py`
-2. `run_feature_engineering.py`
-3. `run_train.py`
-4. `run_drift_check.py`
-5. `run_explain.py`
-6. `run_api.py`
-7. `run_dashboard.py`
+```bash
+python scripts/run_train.py
+```
 
-Такой порядок позволяет последовательно проверить:
-- корректность данных;
-- корректность feature engineering;
-- обучение и сохранение модели;
-- мониторинг дрейфа;
-- explainability;
-- online serving и пользовательский интерфейс.
+Запуск API:
 
-## Контекст проекта
+```bash
+python scripts/run_api.py
+```
 
-Проект разработан в рамках магистерской диссертации по теме построения сквозного ML-пайплайна для выявления сомнительных финансовых операций. Реализация ориентирована на воспроизводимость, интерпретируемость и готовность к интеграции в MLOps-контур.
+Запуск dashboard:
+
+```bash
+python scripts/run_dashboard.py
+```
+
+Проверка Airflow DAG'ов:
+
+```bash
+docker-compose exec airflow-webserver airflow dags list
+```
+
+## Полезные ссылки
+
+- полный гайд по установке и запуску: `SETUP.md`
+- API docs после запуска: `http://localhost:8000/docs`
+- Airflow UI после запуска: `http://localhost:8080`
+- MLflow UI после запуска: `http://localhost:5000`
+- Dashboard после запуска: `http://localhost:8501`
+
+## Очистка
+
+Остановить контейнеры:
+
+```bash
+docker-compose down
+```
+
+Полная очистка вместе с volumes:
+
+```bash
+docker-compose down -v
+```
+
+Удаление локальных артефактов:
+
+```bash
+rm -rf artifacts/*
+rm -rf data/processed/*
+```

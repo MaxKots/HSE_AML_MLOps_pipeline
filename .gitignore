@@ -7,6 +7,7 @@
 
 # Логи прогонов
 /mlruns/
+/logs/
 
 # Данные
 /data/raw/
@@ -15,7 +16,19 @@
 
 # Окружение
 .venv/
+.env
+.env.docker.local
 
 # Скомпилированное
 __pycache__/
 *.pyc
+*.pyo   
+*.pyd
+
+# Notebook checkpoints
+.ipynb_checkpoints/
+
+# Прочее
+/dump/
+/docs/
+*.bak

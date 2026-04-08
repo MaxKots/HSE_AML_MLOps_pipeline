@@ -1,0 +1,16 @@
+FROM apache/airflow:2.10.2
+
+USER root
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
+USER airflow
+
+WORKDIR /opt/airflow
+
+COPY requirements-airflow-runtime.txt /opt/project/requirements-airflow-runtime.txt
+
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel \
+    && pip install --no-cache-dir -r /opt/project/requirements-airflow-runtime.txt

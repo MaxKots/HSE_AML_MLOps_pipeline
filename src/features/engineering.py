@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 from datetime import datetime, timedelta
 
 import numpy as np
@@ -26,10 +27,14 @@ class FeatureEngineer:
     def __init__(
         self,
         target_column: str | None = None,
-        feature_config_path: str = "config/feature_config.yaml",
+        feature_config_path: str | Path | None = None,
     ) -> None:
         self.target_column = target_column or settings.target_column
-        self.feature_config = read_yaml(feature_config_path)
+
+        if feature_config_path is None:
+            feature_config_path = settings.project_root / "config" / "feature_config.yaml"
+
+        self.feature_config = read_yaml(Path(feature_config_path))
 
         self.base_categorical_columns = self.feature_config["features"]["categorical"]
         self.base_binary_columns = self.feature_config["features"]["binary"]

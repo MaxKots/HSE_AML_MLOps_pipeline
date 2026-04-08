@@ -115,7 +115,7 @@ class AMLShapExplainer:
         background = X_prepared[:background_size]
 
         explainer = self._build_explainer(background)
-        shap_values = explainer(X_prepared)
+        shap_values = explainer(X_prepared, check_additivity=False)
 
         prediction_scores = self.model.predict_proba(X_prepared)[:, 1]
         prediction_labels = (prediction_scores >= self.threshold).astype(int)
@@ -217,7 +217,7 @@ class AMLShapExplainer:
             X_prepared = X_prepared[:sample_size]
 
         explainer = self._build_explainer(X_prepared[: min(200, len(X_prepared))])
-        shap_values = explainer(X_prepared)
+        shap_values = explainer(X_prepared, check_additivity=False)
 
         if output_path is None:
             output_path = get_artifacts_dir() / "shap" / "summary_plot.png"
