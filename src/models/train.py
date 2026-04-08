@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 import lightgbm as lgb
@@ -42,12 +43,15 @@ class TrainingResult:
 class AMLModelTrainer:
     def __init__(
         self,
-        model_config_path: str = "config/model_config.yaml",
+        model_config_path: str | Path | None = None,
         target_column: str | None = None,
     ) -> None:
         self.target_column = target_column or settings.target_column
-        self.model_config = read_yaml(model_config_path)
 
+        if model_config_path is None:
+            model_config_path = settings.project_root / "config" / "model_config.yaml"
+
+        self.model_config = read_yaml(Path(model_config_path))
         self.training_config = self.model_config["training"]
         self.lightgbm_config = self.model_config["lightgbm"]
         self.xgboost_config = self.model_config["xgboost"]
