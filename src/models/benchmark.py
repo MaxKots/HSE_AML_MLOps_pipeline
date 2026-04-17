@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from time import perf_counter
 
+import numpy as np
 import pandas as pd
 
 from src.data import DataTransformer, DataValidator
@@ -27,6 +28,11 @@ class BenchmarkResult:
     recall: float
     f1_score: float
     false_positive_rate: float
+    alert_rate: float
+    precision_at_100: float
+    precision_at_500: float
+    recall_at_100: float
+    recall_at_500: float
     train_time_sec: float
     inference_time_sec: float
 
@@ -75,6 +81,38 @@ class AMLBenchmarkRunner:
 
         return raw_df, categorical_columns, numerical_columns
 
+    @staticmethod
+    def _calculate_business_metrics(
+        y_true: np.ndarray,
+        y_proba: np.ndarray,
+        threshold: float = 0.5,
+        top_k_values: tuple[int, ...] = (100, 500),
+    ) -> dict:
+        y_pred = (y_proba >= threshold).astype(int)
+
+        alert_rate = float((y_pred == 1).mean())
+
+        fp = int(((y_pred == 1) & (y_true == 0)).sum())
+        tn = int(((y_pred == 0) & (y_true == 0)).sum())
+        false_positive_rate = float(fp / (fp + tn)) if (fp + tn) > 0 else 0.0
+
+        sorted_idx = np.argsort(y_proba)[::-1]
+
+        results = {
+            "alert_rate": alert_rate,
+            "false_positive_rate": false_positive_rate,
+        }
+
+        for k in top_k_values:
+            k_eff = min(k, len(y_true))
+            top_idx = sorted_idx[:k_eff]
+            precision_at_k = float(y_true[top_idx].mean()) if k_eff > 0 else 0.0
+            recall_at_k = float(y_true[top_idx].sum() / max(y_true.sum(), 1))
+            results[f"precision_at_{k}"] = precision_at_k
+            results[f"recall_at_{k}"] = recall_at_k
+
+        return results
+
     def run_single_experiment(
         self,
         experiment_name: str,
@@ -99,8 +137,18 @@ class AMLBenchmarkRunner:
 
         if test_df is None:
             metrics = training_result.metrics_test
+            # Если нет внешнего test_df, top-k по встроенному test не посчитать без доступа к raw predictions.
+            # Поэтому здесь ставим заглушки.
             test_rows = int(len(prepared_train_df) * 0.15)
             inference_time_sec = 0.0
+            business_metrics = {
+                "alert_rate": 0.0,
+                "false_positive_rate": metrics["false_positive_rate"],
+                "precision_at_100": 0.0,
+                "precision_at_500": 0.0,
+                "recall_at_100": 0.0,
+                "recall_at_500": 0.0,
+            }
         else:
             prepared_test_df, _, _ = self._prepare_dataset(
                 test_df,
@@ -123,6 +171,14 @@ class AMLBenchmarkRunner:
                 y_proba=y_proba,
                 threshold=0.5,
             )
+
+            business_metrics = self._calculate_business_metrics(
+                y_true=y_true,
+                y_proba=y_proba,
+                threshold=0.5,
+                top_k_values=(100, 500),
+            )
+
             test_rows = len(prepared_test_df)
 
         result = BenchmarkResult(
@@ -136,7 +192,12 @@ class AMLBenchmarkRunner:
             precision=metrics["precision"],
             recall=metrics["recall"],
             f1_score=metrics["f1_score"],
-            false_positive_rate=metrics["false_positive_rate"],
+            false_positive_rate=business_metrics["false_positive_rate"],
+            alert_rate=business_metrics["alert_rate"],
+            precision_at_100=business_metrics["precision_at_100"],
+            precision_at_500=business_metrics["precision_at_500"],
+            recall_at_100=business_metrics["recall_at_100"],
+            recall_at_500=business_metrics["recall_at_500"],
             train_time_sec=train_time_sec,
             inference_time_sec=inference_time_sec,
         )
@@ -146,7 +207,8 @@ class AMLBenchmarkRunner:
             f"model={model_type}, "
             f"feature_engineering={use_feature_engineering}, "
             f"roc_auc={result.roc_auc:.4f}, "
-            f"pr_auc={result.pr_auc:.4f}"
+            f"pr_auc={result.pr_auc:.4f}, "
+            f"precision@100={result.precision_at_100:.4f}"
         )
 
         return result

@@ -27,6 +27,7 @@ def run_benchmark_pipeline() -> dict[str, Any]:
     results = []
 
     experiments = [
+        # baseline without feature engineering
         {
             "experiment_name": "baseline_raw_lightgbm",
             "train_df": base_df,
@@ -41,6 +42,8 @@ def run_benchmark_pipeline() -> dict[str, Any]:
             "model_type": "xgboost",
             "use_feature_engineering": False,
         },
+
+        # proposed approach
         {
             "experiment_name": "proposed_fe_lightgbm",
             "train_df": base_df,
@@ -55,6 +58,8 @@ def run_benchmark_pipeline() -> dict[str, Any]:
             "model_type": "xgboost",
             "use_feature_engineering": True,
         },
+
+        # drift robustness
         {
             "experiment_name": "drift_variant_1_lightgbm",
             "train_df": base_df,
@@ -106,6 +111,7 @@ def run_benchmark_pipeline() -> dict[str, Any]:
         "json_path": str(json_path),
         "best_by_pr_auc": results_df.sort_values("pr_auc", ascending=False).iloc[0].to_dict(),
         "best_by_roc_auc": results_df.sort_values("roc_auc", ascending=False).iloc[0].to_dict(),
+        "best_by_precision_at_100": results_df.sort_values("precision_at_100", ascending=False).iloc[0].to_dict(),
     }
 
     logger.info(f"Benchmark pipeline завершён. Проведено экспериментов: {len(results)}")
