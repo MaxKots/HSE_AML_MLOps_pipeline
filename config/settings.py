@@ -22,6 +22,8 @@ class Settings(BaseSettings):
     base_dataset_path: str = Field(default="data/raw/Base.csv", alias="BASE_DATASET_PATH")
     drift_dataset_path_1: str = Field(default="data/raw/Variant I.csv", alias="DRIFT_DATASET_PATH_1")
     drift_dataset_path_2: str = Field(default="data/raw/Variant II.csv", alias="DRIFT_DATASET_PATH_2")
+    synthaml_alerts_path: str = Field(default="data/raw/synthaml_alerts.csv", alias="SYNTHAML_ALERTS_PATH")
+    synthaml_transactions_path: str = Field(default="data/raw/synthaml_transactions.csv", alias="SYNTHAML_TRANSACTIONS_PATH")
 
     target_column: str = Field(default="fraud_bool", alias="TARGET_COLUMN")
     random_seed: int = Field(default=42, alias="RANDOM_SEED")
@@ -44,6 +46,8 @@ class Settings(BaseSettings):
     api_port: int = Field(default=8000, alias="API_PORT")
     dashboard_api_url: str = Field(default="http://localhost:8000", alias="DASHBOARD_API_URL")
 
+
+
     @property
     def project_root(self) -> Path:
         return Path(__file__).resolve().parent.parent
@@ -59,6 +63,14 @@ class Settings(BaseSettings):
     @property
     def drift_dataset_2(self) -> Path:
         return self.project_root / self.drift_dataset_path_2
+
+    @property
+    def synthaml_alerts(self) -> Path:
+        return self.project_root / self.synthaml_alerts_path
+
+    @property
+    def synthaml_transactions(self) -> Path:
+        return self.project_root / self.synthaml_transactions_path
 
 
 settings = Settings()

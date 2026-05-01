@@ -67,14 +67,25 @@ docker/        docker-init и служебные файлы
 - `Base.csv`
 - `Variant I.csv`
 - `Variant II.csv`
+- `synthaml_alerts.csv`
+- `synthaml_transactions.csv`
 
-Целевая колонка:
+Целевая колонка для основного датасета:
 
 - `fraud_bool`
 
+## Экспериментальная база
+
+В проекте используются две группы открытых наборов данных.
+
+- `Base.csv`, `Variant I.csv`, `Variant II.csv` — табличные экспериментальные данные для обучения базовых моделей, анализа дрейфа и проверки воспроизводимости ML/MLOps-контура.
+- `synthaml_alerts.csv` и `synthaml_transactions.csv` — AML-ориентированная экспериментальная база SynthAML, используемая для дополнительной проверки архитектуры на данных, связанных с задачами противодействия отмыванию доходов.
+
+Для SynthAML исходные данные имеют двухтабличную структуру: таблицу алертов и таблицу транзакций. Перед обучением они агрегируются по идентификатору алерта в плоский набор признаков.
+
 ## Быстрый старт
 
-Подробная инструкция находится в файле `SETUP.md`.
+Подробная инструкция находится в файле `docs/setup.md`.
 
 Если нужен полный пошаговый гайд по:
 - virtual environment;
@@ -84,7 +95,7 @@ docker/        docker-init и служебные файлы
 - проверке работы;
 - очистке проекта;
 
-смотри `SETUP.md`.
+смотри `docs/setup.md`.
 
 ## Локальный запуск через venv
 
@@ -113,6 +124,19 @@ python scripts/run_explain.py
 python scripts/run_api.py
 python scripts/run_dashboard.py
 ```
+
+Запуск бенчмарка:
+```
+docker-compose exec api python scripts/run_benchmark.py
+```
+
+Бенчмарк сравнивает модели LightGBM и XGBoost на нескольких экспериментальных сценариях:
+
+- базовые эксперименты на Base.csv;
+- проверка устойчивости на Variant I.csv и Variant II.csv;
+- дополнительная AML-ориентированная проверка на SynthAML.
+
+Результаты сохраняются в artifacts/metrics/benchmark_results.csv и artifacts/metrics/benchmark_results.json
 
 ## Запуск через Docker Compose
 

@@ -9,7 +9,7 @@ from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
-DatasetName = Literal["base", "variant_1", "variant_2"]
+DatasetName = Literal["base", "variant_1", "variant_2", "synthaml_alerts", "synthaml_transactions"]
 
 
 class DataLoader:
@@ -18,6 +18,8 @@ class DataLoader:
             "base": Path(settings.base_dataset),
             "variant_1": Path(settings.drift_dataset_1),
             "variant_2": Path(settings.drift_dataset_2),
+            "synthaml_alerts": Path(settings.synthaml_alerts),
+            "synthaml_transactions": Path(settings.synthaml_transactions),
         }
 
     def load_from_path(self, path: str | Path) -> pd.DataFrame:

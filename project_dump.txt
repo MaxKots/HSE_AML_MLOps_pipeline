@@ -1,0 +1,3860 @@
+PROJECT ROOT: /home/max/HSE_AML_MLOps_pipeline
+GENERATED AT: 2026-04-29 13:09:54
+MAX TEXT FILE SIZE: 524288 bytes
+
+====================
+DIRECTORY STRUCTURE
+====================
+
+.
+./.assets
+./.assets/1.jpg
+./.assets/2.jpg
+./.assets/3.jpg
+./.assets/schema.svg
+./config
+./config/api_config.yaml
+./config/data_config.yaml
+./config/feature_config.yaml
+./config/model_config.yaml
+./config/settings.py
+./dags
+./dags/aml_drift_dag.py
+./dags/aml_training_dag.py
+./dashboard
+./dashboard/app.py
+./data
+./data/processed
+./data/processed/base_features.csv
+./data/processed/base_processed.csv
+./data/raw
+./data/raw/Base.csv
+./data/raw/synthaml_alerts.csv
+./data/raw/synthaml_transactions.csv
+./data/raw/Variant I.csv
+./data/raw/Variant II.csv
+./data/reference
+./docker
+./docker-compose.yml
+./Dockerfile
+./Dockerfile.airflow
+./.dockerignore
+./docker/postgres
+./docker/postgres/init
+./docker/postgres/init/init-multiple-dbs.sql
+./docs
+./docs/setup.md
+./dump
+./dump/dump_project.sh
+./dump/project_dump.txt
+./.env
+./.env.docker.local
+./.env.example
+./.gitignore
+./LICENSE
+./Makefile
+./notebooks
+./notebooks/eda.ipynb
+./project_dump.txt
+./README.md
+./requirements-airflow-runtime.txt
+./requirements-airflow.txt
+./requirements-dev.txt
+./requirements.txt
+./scripts
+./scripts/fix_local_permissions.sh
+./scripts/promote_model.py
+./scripts/run_api.py
+./scripts/run_benchmark.py
+./scripts/run_dashboard.py
+./scripts/run_data_check.py
+./scripts/run_drift_check.py
+./scripts/run_explain.py
+./scripts/run_feature_engineering.py
+./scripts/run_prepare_synthaml.py
+./scripts/run_synthaml_thresholds.py
+./scripts/run_train.py
+./src
+./src/api
+./src/api/dependencies.py
+./src/api/__init__.py
+./src/api/init.py
+./src/api/main.py
+./src/api/schemas.py
+./src/api/service.py
+./src/data
+./src/data/__init__.py
+./src/data/init.py
+./src/data/loaders.py
+./src/data/schemas.py
+./src/data/synthaml_0.py
+./src/data/synthaml_1.py
+./src/data/synthaml.py
+./src/data/transformers.py
+./src/data/validators.py
+./src/explainability
+./src/explainability/__init__.py
+./src/explainability/init.py
+./src/explainability/shap_explainer.py
+./src/features
+./src/features/engineering.py
+./src/features/__init__.py
+./src/features/init.py
+./src/__init__.py
+./src/init.py
+./src/models
+./src/models/benchmark.py
+./src/models/evaluate.py
+./src/models/__init__.py
+./src/models/init.py
+./src/models/predict.py
+./src/models/registry.py
+./src/models/train.py
+./src/monitoring
+./src/monitoring/drift.py
+./src/monitoring/__init__.py
+./src/monitoring/init.py
+./src/pipelines
+./src/pipelines/benchmark_pipeline.py
+./src/pipelines/drift_pipeline.py
+./src/pipelines/__init__.py
+./src/pipelines/init.py
+./src/pipelines/training_pipeline.py
+./src/utils
+./src/utils/common.py
+./src/utils/__init__.py
+./src/utils/init.py
+./src/utils/io.py
+./src/utils/logger.py
+./src/utils/paths.py
+./test_debug.txt
+./tests
+./tests/__init__.py
+./tests/init.py
+./tests/test_api.py
+./tests/test_benchmark.py
+./tests/test_drift.py
+./tests/test_explainability.py
+./tests/test_features.py
+./tests/test_loaders.py
+./tests/test_training.py
+./tests/test_validators.py
+
+=================
+FILES CONTENT
+=================
+
+----- FILE: ./config/api_config.yaml -----
+api:
+  service_name: aml-scoring-api
+  version: 1.0.0
+  recommendation_thresholds:
+    red: 0.80
+    yellow: 0.50
+
+----- END FILE: ./config/api_config.yaml -----
+
+----- FILE: ./config/data_config.yaml -----
+dataset:
+  target_column: fraud_bool
+  id_columns: []
+  drop_columns: []
+
+split:
+  train_size: 0.7
+  valid_size: 0.15
+  test_size: 0.15
+  shuffle: false
+
+drift:
+  numerical_drift_threshold: 0.1
+  share_of_drifted_columns_threshold: 0.3
+  stattest: psi
+
+sources:
+  base_dataset_path: data/raw/Base.csv
+  drift_dataset_path_1: data/raw/Variant I.csv
+  drift_dataset_path_2: data/raw/Variant II.csv
+  synthaml_alerts_path: data/raw/synthaml_alerts.csv
+  synthaml_transactions_path: data/raw/synthaml_transactions.csv
+
+----- END FILE: ./config/data_config.yaml -----
+
+----- FILE: ./config/feature_config.yaml -----
+features:
+  categorical:
+    - payment_type
+    - employment_status
+    - housing_status
+    - source
+    - device_os
+
+  binary:
+    - email_is_free
+    - phone_home_valid
+    - phone_mobile_valid
+    - has_other_cards
+    - foreign_request
+    - keep_alive_session
+
+  numerical:
+    - income
+    - name_email_similarity
+    - prev_address_months_count
+    - current_address_months_count
+    - customer_age
+    - days_since_request
+    - intended_balcon_amount
+    - zip_count_4w
+    - velocity_6h
+    - velocity_24h
+    - velocity_4w
+    - bank_branch_count_8w
+    - date_of_birth_distinct_emails_4w
+    - credit_risk_score
+    - bank_months_count
+    - proposed_credit_limit
+    - session_length_in_minutes
+    - device_distinct_emails_8w
+    - device_fraud_count
+    - month
+
+engineered:
+  create_time_features: true
+  create_velocity_features: true
+  create_interaction_features: true
+
+----- END FILE: ./config/feature_config.yaml -----
+
+----- FILE: ./config/model_config.yaml -----
+model:
+  type: lightgbm
+
+lightgbm:
+  objective: binary
+  metric: auc
+  boosting_type: gbdt
+  learning_rate: 0.05
+  n_estimators: 300
+  num_leaves: 31
+  max_depth: -1
+  subsample: 0.8
+  colsample_bytree: 0.8
+  reg_alpha: 0.0
+  reg_lambda: 0.0
+  random_state: 42
+  n_jobs: -1
+  class_weight: balanced
+
+xgboost:
+  objective: binary:logistic
+  eval_metric: auc
+  learning_rate: 0.05
+  n_estimators: 300
+  max_depth: 6
+  subsample: 0.8
+  colsample_bytree: 0.8
+  reg_alpha: 0.0
+  reg_lambda: 1.0
+  random_state: 42
+  n_jobs: -1
+  scale_pos_weight: 1.0
+
+training:
+  threshold: 0.5
+  cv_folds: 3
+  log_model: true
+
+----- END FILE: ./config/model_config.yaml -----
+
+----- FILE: ./config/settings.py -----
+from pathlib import Path
+
+from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
+
+    app_env: str = Field(default="local", alias="APP_ENV")
+    app_name: str = Field(default="aml-pipeline", alias="APP_NAME")
+
+    data_raw_dir: str = Field(default="data/raw", alias="DATA_RAW_DIR")
+    data_processed_dir: str = Field(default="data/processed", alias="DATA_PROCESSED_DIR")
+    data_reference_dir: str = Field(default="data/reference", alias="DATA_REFERENCE_DIR")
+    artifacts_dir: str = Field(default="artifacts", alias="ARTIFACTS_DIR")
+
+    base_dataset_path: str = Field(default="data/raw/Base.csv", alias="BASE_DATASET_PATH")
+    drift_dataset_path_1: str = Field(default="data/raw/Variant I.csv", alias="DRIFT_DATASET_PATH_1")
+    drift_dataset_path_2: str = Field(default="data/raw/Variant II.csv", alias="DRIFT_DATASET_PATH_2")
+    synthaml_alerts_path: str = Field(default="data/raw/synthaml_alerts.csv", alias="SYNTHAML_ALERTS_PATH")
+    synthaml_transactions_path: str = Field(default="data/raw/synthaml_transactions.csv", alias="SYNTHAML_TRANSACTIONS_PATH")
+
+    target_column: str = Field(default="fraud_bool", alias="TARGET_COLUMN")
+    random_seed: int = Field(default=42, alias="RANDOM_SEED")
+
+    mlflow_tracking_uri: str = Field(default="file:./mlruns", alias="MLFLOW_TRACKING_URI")
+    mlflow_experiment_name: str = Field(default="aml_detection", alias="MLFLOW_EXPERIMENT_NAME")
+
+    postgres_host: str = Field(default="localhost", alias="POSTGRES_HOST")
+    postgres_port: int = Field(default=5432, alias="POSTGRES_PORT")
+    postgres_db: str = Field(default="aml", alias="POSTGRES_DB")
+    postgres_user: str = Field(default="aml_user", alias="POSTGRES_USER")
+    postgres_password: str = Field(default="aml_password", alias="POSTGRES_PASSWORD")
+
+    minio_endpoint: str = Field(default="localhost:9000", alias="MINIO_ENDPOINT")
+    minio_access_key: str = Field(default="minioadmin", alias="MINIO_ACCESS_KEY")
+    minio_secret_key: str = Field(default="minioadmin", alias="MINIO_SECRET_KEY")
+    minio_bucket: str = Field(default="mlflow", alias="MINIO_BUCKET")
+
+    api_host: str = Field(default="0.0.0.0", alias="API_HOST")
+    api_port: int = Field(default=8000, alias="API_PORT")
+    dashboard_api_url: str = Field(default="http://localhost:8000", alias="DASHBOARD_API_URL")
+
+
+
+    @property
+    def project_root(self) -> Path:
+        return Path(__file__).resolve().parent.parent
+
+    @property
+    def base_dataset(self) -> Path:
+        return self.project_root / self.base_dataset_path
+
+    @property
+    def drift_dataset_1(self) -> Path:
+        return self.project_root / self.drift_dataset_path_1
+
+    @property
+    def drift_dataset_2(self) -> Path:
+        return self.project_root / self.drift_dataset_path_2
+
+    @property
+    def synthaml_alerts(self) -> Path:
+        return self.project_root / self.synthaml_alerts_path
+
+    @property
+    def synthaml_transactions(self) -> Path:
+        return self.project_root / self.synthaml_transactions_path
+
+
+settings = Settings()
+
+----- END FILE: ./config/settings.py -----
+
+----- FILE: ./dags/aml_drift_dag.py -----
+from __future__ import annotations
+
+from datetime import datetime, timedelta
+from pprint import pformat
+
+from airflow.decorators import dag, task
+from airflow.operators.empty import EmptyOperator
+from airflow.operators.trigger_dagrun import TriggerDagRunOperator
+
+from src.pipelines.drift_pipeline import run_drift_pipeline
+from src.utils.logger import get_logger
+
+logger = get_logger(__name__)
+
+
+default_args = {
+    "owner": "aml-mlops",
+    "depends_on_past": False,
+    "email_on_failure": False,
+    "email_on_retry": False,
+    "retries": 2,
+    "retry_delay": timedelta(minutes=5),
+}
+
+
+@dag(
+    dag_id="aml_drift_dag",
+    description="Проверка дрейфа данных и запуск переобучения при необходимости",
+    default_args=default_args,
+    start_date=datetime(2025, 1, 1),
+    schedule="@daily",
+    catchup=False,
+    tags=["aml", "drift", "mlops"],
+)
+def aml_drift_dag():
+    start = EmptyOperator(task_id="start")
+    no_drift = EmptyOperator(task_id="no_drift_detected")
+    finish = EmptyOperator(task_id="finish")
+
+    @task(task_id="run_drift_check")
+    def run_drift_check_task(current_dataset_name: str = "variant_1") -> dict:
+        logger.info(f"Запуск drift-check для датасета '{current_dataset_name}'")
+
+        summary = run_drift_pipeline(
+            reference_dataset_name="base",
+            current_dataset_name=current_dataset_name,
+        )
+
+        logger.info("Drift-check завершён")
+        logger.info(pformat(summary))
+
+        return summary
+
+    @task.branch(task_id="branch_on_drift")
+    def branch_on_drift_task(drift_summary: dict) -> str:
+        drift_detected = bool(drift_summary["drift_detected"])
+
+        if drift_detected:
+            logger.info("Обнаружен дрейф, переход в ветку retraining")
+            return "trigger_retraining"
+
+        logger.info("Дрейф не обнаружен, завершение без переобучения")
+        return "no_drift_detected"
+
+    trigger_retraining = TriggerDagRunOperator(
+        task_id="trigger_retraining",
+        trigger_dag_id="aml_training_dag",
+        conf={"dataset_name": "base"},
+        wait_for_completion=False,
+        reset_dag_run=True,
+    )
+
+    drift_summary = run_drift_check_task()
+    branch_decision = branch_on_drift_task(drift_summary)
+
+    start >> drift_summary >> branch_decision
+    branch_decision >> trigger_retraining >> finish
+    branch_decision >> no_drift >> finish
+
+
+aml_drift_dag()
+
+----- END FILE: ./dags/aml_drift_dag.py -----
+
+----- FILE: ./dags/aml_training_dag.py -----
+from __future__ import annotations
+
+from datetime import datetime, timedelta
+from pprint import pformat
+
+from airflow.decorators import dag, task
+from airflow.operators.empty import EmptyOperator
+from airflow.operators.python import get_current_context
+
+from src.pipelines.training_pipeline import run_training_pipeline
+from src.utils.logger import get_logger
+
+logger = get_logger(__name__)
+
+
+default_args = {
+    "owner": "aml-mlops",
+    "depends_on_past": False,
+    "email_on_failure": False,
+    "email_on_retry": False,
+    "retries": 2,
+    "retry_delay": timedelta(minutes=5),
+}
+
+
+@dag(
+    dag_id="aml_training_dag",
+    description="Обучение AML-модели на базовом датасете",
+    default_args=default_args,
+    start_date=datetime(2025, 1, 1),
+    schedule=None,
+    catchup=False,
+    tags=["aml", "training", "mlops"],
+)
+def aml_training_dag():
+    start = EmptyOperator(task_id="start")
+    finish = EmptyOperator(task_id="finish")
+
+    @task(task_id="read_runtime_config")
+    def read_runtime_config_task() -> dict:
+        context = get_current_context()
+        dag_run = context.get("dag_run")
+
+        conf = dag_run.conf if dag_run and dag_run.conf else {}
+        dataset_name = conf.get("dataset_name", "base")
+
+        runtime_config = {
+            "dataset_name": dataset_name,
+        }
+
+        logger.info(f"Runtime-конфигурация прочитана: {runtime_config}")
+        return runtime_config
+
+    @task(task_id="run_training")
+    def run_training_task(runtime_config: dict) -> dict:
+        dataset_name = runtime_config["dataset_name"]
+
+        logger.info(f"Запуск задачи обучения для датасета '{dataset_name}'")
+
+        summary = run_training_pipeline(dataset_name=dataset_name)
+
+        logger.info("Задача обучения завершена")
+        logger.info(pformat(summary))
+
+        return summary
+
+    runtime_config = read_runtime_config_task()
+    training_summary = run_training_task(runtime_config)
+
+    start >> runtime_config >> training_summary >> finish
+
+
+aml_training_dag()
+
+----- END FILE: ./dags/aml_training_dag.py -----
+
+----- FILE: ./dashboard/app.py -----
+from __future__ import annotations
+
+import pandas as pd
+import requests
+import streamlit as st
+
+from config.settings import settings
+from src.utils.io import load_dataframe, read_yaml
+from src.utils.paths import get_artifacts_dir
+
+st.set_page_config(
+    page_title="AML Dashboard",
+    page_icon="🚨",
+    layout="wide",
+)
+
+API_URL = settings.dashboard_api_url
+
+INTEGER_COLUMNS = [
+    "prev_address_months_count",
+    "current_address_months_count",
+    "customer_age",
+    "days_since_request",
+    "zip_count_4w",
+    "bank_branch_count_8w",
+    "date_of_birth_distinct_emails_4w",
+    "email_is_free",
+    "phone_home_valid",
+    "phone_mobile_valid",
+    "bank_months_count",
+    "has_other_cards",
+    "foreign_request",
+    "keep_alive_session",
+    "device_distinct_emails_8w",
+    "device_fraud_count",
+    "month",
+]
+
+FLOAT_COLUMNS = [
+    "income",
+    "name_email_similarity",
+    "intended_balcon_amount",
+    "velocity_6h",
+    "velocity_24h",
+    "velocity_4w",
+    "credit_risk_score",
+    "proposed_credit_limit",
+    "session_length_in_minutes",
+]
+
+STRING_COLUMNS = [
+    "payment_type",
+    "employment_status",
+    "housing_status",
+    "source",
+    "device_os",
+]
+
+
+@st.cache_data
+def load_local_dataset(dataset_name: str) -> pd.DataFrame:
+    dataset_map = {
+        "Base": settings.base_dataset,
+        "Variant I": settings.drift_dataset_1,
+        "Variant II": settings.drift_dataset_2,
+    }
+
+    path = dataset_map[dataset_name]
+    return load_dataframe(path)
+
+
+def check_api_health() -> dict:
+    try:
+        response = requests.get(f"{API_URL}/health", timeout=10)
+        response.raise_for_status()
+        return response.json()
+    except Exception as exc:
+        return {
+            "status": "error",
+            "is_model_loaded": False,
+            "loaded_model_type": None,
+            "error": str(exc),
+        }
+
+
+def prepare_transactions_payload(df: pd.DataFrame) -> list[dict]:
+    working_df = df.drop(columns=["fraud_bool"], errors="ignore").copy()
+
+    for column in INTEGER_COLUMNS:
+        if column in working_df.columns:
+            working_df[column] = pd.to_numeric(working_df[column], errors="coerce").round().astype("Int64")
+
+    for column in FLOAT_COLUMNS:
+        if column in working_df.columns:
+            working_df[column] = pd.to_numeric(working_df[column], errors="coerce").astype(float)
+
+    for column in STRING_COLUMNS:
+        if column in working_df.columns:
+            working_df[column] = working_df[column].astype(str)
+
+    records = working_df.where(pd.notnull(working_df), None).to_dict(orient="records")
+    return records
+
+
+def score_batch(df: pd.DataFrame) -> list[dict]:
+    payload = {
+        "transactions": prepare_transactions_payload(df)
+    }
+
+    response = requests.post(
+        f"{API_URL}/predict_batch",
+        json=payload,
+        timeout=120,
+    )
+
+    if not response.ok:
+        raise ValueError(f"API error {response.status_code}: {response.text}")
+
+    return response.json()["items"]
+
+
+def load_drift_summary() -> list[dict]:
+    reports_dir = get_artifacts_dir() / "reports"
+    if not reports_dir.exists():
+        return []
+
+    summaries = []
+    for path in sorted(reports_dir.glob("drift_*.yaml")):
+        try:
+            report = read_yaml(path)
+            metrics = report["metrics"][0]["result"]
+
+            summaries.append(
+                {
+                    "report_file": path.name,
+                    "dataset_drift": metrics.get("dataset_drift"),
+                    "share_of_drifted_columns": metrics.get("share_of_drifted_columns"),
+                    "number_of_drifted_columns": metrics.get("number_of_drifted_columns"),
+                    "number_of_columns": metrics.get("number_of_columns"),
+                }
+            )
+        except Exception:
+            continue
+
+    return summaries
+
+
+def recommendation_to_label(recommendation: str) -> str:
+    mapping = {
+        "red": "🔴 block",
+        "yellow": "🟡 review",
+        "green": "🟢 pass",
+    }
+    return mapping.get(recommendation, recommendation)
+
+
+def main() -> None:
+    st.title("🚨 AML MLOps Dashboard")
+    st.caption("Интерактивный интерфейс для анализа подозрительных финансовых операций")
+
+    with st.sidebar:
+        st.header("Настройки")
+        dataset_name = st.selectbox("Датасет", ["Base", "Variant I", "Variant II"], index=0)
+        sample_size = st.slider("Размер выборки", min_value=10, max_value=500, value=100, step=10)
+        run_scoring = st.button("Запустить batch scoring", type="primary")
+
+        st.markdown("---")
+        st.write("API URL:", API_URL)
+
+    st.subheader("Состояние API")
+    health = check_api_health()
+
+    if health.get("status") == "ok":
+        st.success(f"API доступен. Загружена модель: {health.get('loaded_model_type')}")
+    else:
+        st.error(f"API недоступен: {health.get('error', 'unknown error')}")
+
+    tab1, tab2, tab3 = st.tabs(["Скоринг транзакций", "Drift monitoring", "О системе"])
+
+    with tab1:
+        st.subheader("Скоринг транзакций")
+
+        df = load_local_dataset(dataset_name).head(sample_size)
+        st.write("Пример входных данных:")
+        st.dataframe(df.head(10), use_container_width=True)
+
+        if run_scoring:
+            with st.spinner("Выполняется scoring через FastAPI..."):
+                try:
+                    scored_items = score_batch(df)
+                    scored_df = pd.DataFrame(scored_items)
+
+                    scored_df["recommendation_label"] = scored_df["recommendation"].apply(recommendation_to_label)
+
+                    st.success(f"Скоринг завершён. Обработано записей: {len(scored_df)}")
+
+                    col1, col2, col3 = st.columns(3)
+                    col1.metric("Всего записей", len(scored_df))
+                    col2.metric("Красные", int((scored_df["recommendation"] == "red").sum()))
+                    col3.metric("Жёлтые", int((scored_df["recommendation"] == "yellow").sum()))
+
+                    st.markdown("### Результаты batch scoring")
+                    filter_values = st.multiselect(
+                        "Фильтр по рекомендации",
+                        options=["red", "yellow", "green"],
+                        default=["red", "yellow", "green"],
+                    )
+
+                    filtered_df = scored_df[scored_df["recommendation"].isin(filter_values)].copy()
+                    filtered_df = filtered_df.sort_values("prediction_score", ascending=False)
+
+                    st.dataframe(
+                        filtered_df[
+                            ["row_index", "prediction_score", "prediction_label", "recommendation_label"]
+                        ],
+                        use_container_width=True,
+                    )
+
+                    st.markdown("### Детальный просмотр транзакции")
+                    selected_row_index = st.selectbox(
+                        "Выберите строку",
+                        options=filtered_df["row_index"].tolist(),
+                    )
+
+                    selected_item = filtered_df[filtered_df["row_index"] == selected_row_index].iloc[0]
+
+                    col_a, col_b, col_c = st.columns(3)
+                    col_a.metric("Score", f"{selected_item['prediction_score']:.4f}")
+                    col_b.metric("Label", int(selected_item["prediction_label"]))
+                    col_c.metric("Recommendation", recommendation_to_label(selected_item["recommendation"]))
+
+                    st.markdown("#### Top positive factors")
+                    positive_df = pd.DataFrame(selected_item["top_positive_factors"])
+                    if not positive_df.empty:
+                        st.dataframe(positive_df, use_container_width=True)
+                    else:
+                        st.info("Положительные факторы риска отсутствуют")
+
+                    st.markdown("#### Top negative factors")
+                    negative_df = pd.DataFrame(selected_item["top_negative_factors"])
+                    if not negative_df.empty:
+                        st.dataframe(negative_df, use_container_width=True)
+                    else:
+                        st.info("Факторы, снижающие риск, отсутствуют")
+
+                    st.markdown("#### Human-readable explanation")
+                    for reason in selected_item["human_readable_reasons"]:
+                        st.write(f"- {reason}")
+
+                    st.markdown("#### Исходные поля выбранной записи")
+                    original_row = df.iloc[int(selected_row_index)]
+                    st.json(original_row.to_dict())
+
+                except Exception as exc:
+                    st.error(f"Ошибка batch scoring: {exc}")
+
+    with tab2:
+        st.subheader("Drift monitoring")
+
+        drift_summaries = load_drift_summary()
+        if not drift_summaries:
+            st.info("Drift-отчёты пока не найдены. Сначала выполнить pipeline drift-check.")
+        else:
+            drift_df = pd.DataFrame(drift_summaries)
+            st.dataframe(drift_df, use_container_width=True)
+
+            latest_report = drift_df.iloc[-1]
+            st.markdown("### Последний drift report")
+            st.write(f"Файл: `{latest_report['report_file']}`")
+            st.write(f"Dataset drift: `{latest_report['dataset_drift']}`")
+            st.write(f"Доля drifted columns: `{latest_report['share_of_drifted_columns']}`")
+            st.write(
+                f"Drifted columns: `{latest_report['number_of_drifted_columns']}` "
+                f"из `{latest_report['number_of_columns']}`"
+            )
+
+    with tab3:
+        st.subheader("О системе")
+        st.markdown(
+            """
+            **Технологический стек**
+            - Airflow: оркестрация пайплайнов
+            - MLflow: трекинг экспериментов и реестр моделей
+            - LightGBM / XGBoost: обучение моделей
+            - SHAP: интерпретация решений
+            - Evidently: детекция дрейфа
+            - FastAPI: REST API для инференса
+            - Streamlit: интерактивный дашборд
+            """
+        )
+
+        st.markdown("### Артефакты")
+        artifacts_dir = get_artifacts_dir()
+        st.write(f"Путь к артефактам: `{artifacts_dir}`")
+
+        feature_spec_path = artifacts_dir / "metrics" / "feature_spec.yaml"
+        if feature_spec_path.exists():
+            feature_spec = read_yaml(feature_spec_path)
+            st.write(f"Количество признаков: {len(feature_spec.get('feature_columns', []))}")
+            st.write(f"Категориальных: {len(feature_spec.get('categorical_columns', []))}")
+            st.write(f"Числовых: {len(feature_spec.get('numerical_columns', []))}")
+
+
+if __name__ == "__main__":
+    main()
+
+----- END FILE: ./dashboard/app.py -----
+
+----- FILE: ./docker-compose.yml -----
+services:
+  postgres:
+    image: postgres:15
+    container_name: aml_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: aml_user
+      POSTGRES_PASSWORD: aml_password
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d
+
+  minio:
+    image: minio/minio:latest
+    container_name: aml_minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+
+  mlflow:
+    image: python:3.10-slim
+    container_name: aml_mlflow
+    # user: "${UID}:${GID}"
+    working_dir: /app
+    restart: unless-stopped
+    volumes:
+      - ./:/app
+    command: >
+      bash -lc 'pip install mlflow==2.17.0 boto3 psycopg2-binary &&
+      python -c "import socket,time; [socket.create_connection((\"postgres\",5432),2).close() or exit() for _ in range(60) if not time.sleep(2)]" &&
+      mlflow server
+      --backend-store-uri postgresql://aml_user:aml_password@postgres:5432/mlflow
+      --default-artifact-root ./mlruns
+      --host 0.0.0.0
+      --port 5000'
+    ports:
+      - "5000:5000"
+    depends_on:
+      - postgres
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: aml_api
+    user: "${UID}:${GID}"
+    working_dir: /app
+    restart: unless-stopped
+    command: python scripts/run_api.py
+    volumes:
+      - ./:/app
+    environment:
+      APP_ENV: docker
+      APP_NAME: aml-pipeline
+      DATA_RAW_DIR: data/raw
+      DATA_PROCESSED_DIR: data/processed
+      DATA_REFERENCE_DIR: data/reference
+      ARTIFACTS_DIR: artifacts
+      BASE_DATASET_PATH: data/raw/Base.csv
+      DRIFT_DATASET_PATH_1: data/raw/Variant I.csv
+      DRIFT_DATASET_PATH_2: data/raw/Variant II.csv
+      TARGET_COLUMN: fraud_bool
+      RANDOM_SEED: 42
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+      MLFLOW_EXPERIMENT_NAME: aml_detection
+      API_HOST: 0.0.0.0
+      API_PORT: 8000
+      DASHBOARD_API_URL: http://api:8000
+      PYTHONPATH: /app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - mlflow
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: aml_dashboard
+    user: "${UID}:${GID}"
+    working_dir: /app
+    restart: unless-stopped
+    command: python scripts/run_dashboard.py
+    volumes:
+      - ./:/app
+    environment:
+      APP_ENV: docker
+      APP_NAME: aml-pipeline
+      DATA_RAW_DIR: data/raw
+      DATA_PROCESSED_DIR: data/processed
+      DATA_REFERENCE_DIR: data/reference
+      ARTIFACTS_DIR: artifacts
+      BASE_DATASET_PATH: data/raw/Base.csv
+      DRIFT_DATASET_PATH_1: data/raw/Variant I.csv
+      DRIFT_DATASET_PATH_2: data/raw/Variant II.csv
+      TARGET_COLUMN: fraud_bool
+      RANDOM_SEED: 42
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+      DASHBOARD_API_URL: http://api:8000
+      PYTHONPATH: /app
+    ports:
+      - "8501:8501"
+    depends_on:
+      - api
+
+  airflow-init:
+    build:
+      context: .
+      dockerfile: Dockerfile.airflow
+    container_name: aml_airflow_init
+    user: "${AIRFLOW_UID}:0"
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://aml_user:aml_password@postgres:5432/airflow
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW_HOME: /opt/airflow
+      PYTHONPATH: /opt/project
+      APP_ENV: docker
+      APP_NAME: aml-pipeline
+      DATA_RAW_DIR: data/raw
+      DATA_PROCESSED_DIR: data/processed
+      DATA_REFERENCE_DIR: data/reference
+      ARTIFACTS_DIR: artifacts
+      BASE_DATASET_PATH: data/raw/Base.csv
+      DRIFT_DATASET_PATH_1: data/raw/Variant I.csv
+      DRIFT_DATASET_PATH_2: data/raw/Variant II.csv
+      TARGET_COLUMN: fraud_bool
+      RANDOM_SEED: 42
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+      MLFLOW_EXPERIMENT_NAME: aml_detection
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./logs:/opt/airflow/logs
+      - ./src:/opt/project/src
+      - ./config:/opt/project/config
+      - ./scripts:/opt/project/scripts
+      - ./data:/opt/project/data
+      - ./artifacts:/opt/project/artifacts
+      - ./.env:/opt/project/.env
+    command: >
+      bash -lc 'airflow db migrate &&
+      airflow users create --username admin --password admin --firstname admin --lastname admin --role Admin --email admin@example.com || true'
+    depends_on:
+      - postgres
+      - mlflow
+
+  airflow-webserver:
+    build:
+      context: .
+      dockerfile: Dockerfile.airflow
+    container_name: aml_airflow_webserver
+    user: "${AIRFLOW_UID}:0"
+    restart: unless-stopped
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://aml_user:aml_password@postgres:5432/airflow
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__WEBSERVER__SECRET_KEY: aml_secret_key
+      AIRFLOW_HOME: /opt/airflow
+      PYTHONPATH: /opt/project
+      APP_ENV: docker
+      APP_NAME: aml-pipeline
+      DATA_RAW_DIR: data/raw
+      DATA_PROCESSED_DIR: data/processed
+      DATA_REFERENCE_DIR: data/reference
+      ARTIFACTS_DIR: artifacts
+      BASE_DATASET_PATH: data/raw/Base.csv
+      DRIFT_DATASET_PATH_1: data/raw/Variant I.csv
+      DRIFT_DATASET_PATH_2: data/raw/Variant II.csv
+      TARGET_COLUMN: fraud_bool
+      RANDOM_SEED: 42
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+      MLFLOW_EXPERIMENT_NAME: aml_detection
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./logs:/opt/airflow/logs
+      - ./src:/opt/project/src
+      - ./config:/opt/project/config
+      - ./scripts:/opt/project/scripts
+      - ./data:/opt/project/data
+      - ./artifacts:/opt/project/artifacts
+      - ./.env:/opt/project/.env
+    command: airflow webserver
+    ports:
+      - "8080:8080"
+    depends_on:
+      - airflow-init
+
+  airflow-scheduler:
+    build:
+      context: .
+      dockerfile: Dockerfile.airflow
+    container_name: aml_airflow_scheduler
+    user: "${AIRFLOW_UID}:0"
+    restart: unless-stopped
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://aml_user:aml_password@postgres:5432/airflow
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW_HOME: /opt/airflow
+      PYTHONPATH: /opt/project
+      APP_ENV: docker
+      APP_NAME: aml-pipeline
+      DATA_RAW_DIR: data/raw
+      DATA_PROCESSED_DIR: data/processed
+      DATA_REFERENCE_DIR: data/reference
+      ARTIFACTS_DIR: artifacts
+      BASE_DATASET_PATH: data/raw/Base.csv
+      DRIFT_DATASET_PATH_1: data/raw/Variant I.csv
+      DRIFT_DATASET_PATH_2: data/raw/Variant II.csv
+      TARGET_COLUMN: fraud_bool
+      RANDOM_SEED: 42
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+      MLFLOW_EXPERIMENT_NAME: aml_detection
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./logs:/opt/airflow/logs
+      - ./src:/opt/project/src
+      - ./config:/opt/project/config
+      - ./scripts:/opt/project/scripts
+      - ./data:/opt/project/data
+      - ./artifacts:/opt/project/artifacts
+      - ./.env:/opt/project/.env
+    command: airflow scheduler
+    depends_on:
+      - airflow-init
+
+volumes:
+  postgres_data:
+  minio_data:
+
+----- END FILE: ./docker-compose.yml -----
+
+----- FILE: ./Dockerfile -----
+FROM python:3.10-slim
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements-dev.txt /app/requirements-dev.txt
+
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel \
+    && pip install --no-cache-dir -r requirements-dev.txt
+
+COPY . /app
+
+ENV PYTHONPATH=/app
+
+CMD ["python", "scripts/run_train.py"]
+
+----- END FILE: ./Dockerfile -----
+
+----- FILE: ./.dockerignore -----
+.git
+.gitignore
+.venv
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+
+mlruns
+artifacts
+data/raw
+data/processed
+data/reference
+
+notebooks
+.ipynb_checkpoints
+
+.vscode
+.idea
+.DS_Store
+
+.assets
+
+*.joblib
+*.parquet
+*.html
+
+----- END FILE: ./.dockerignore -----
+
+----- FILE: ./docker/postgres/init/init-multiple-dbs.sql -----
+CREATE DATABASE airflow;
+CREATE DATABASE mlflow;
+
+----- END FILE: ./docker/postgres/init/init-multiple-dbs.sql -----
+
+----- FILE: ./docs/setup.md -----
+# SETUP
+
+Подробная инструкция по запуску проекта `AML Pipeline` локально и в Docker.
+
+## 1. Что нужно перед стартом
+
+Для локального запуска:
+
+- Python 3.10+;
+- pip;
+- virtual environment `venv` или `.venv`.
+
+Для контейнерного запуска:
+
+- Docker;
+- Docker Compose.
+
+Также нужно положить исходные датасеты в папку:
+
+- `data/raw/Base.csv`
+- `data/raw/Variant I.csv`
+- `data/raw/Variant II.csv`
+
+Целевая колонка:
+
+- `fraud_bool`
+
+---
+
+## 2. Локальный запуск через virtual environment
+
+### 2.1 Создание окружения
+
+Linux / macOS:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+Windows PowerShell:
+
+```powershell
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+```
+
+Проверка:
+
+```bash
+which python
+python --version
+pip --version
+```
+
+---
+
+### 2.2 Установка зависимостей
+
+```bash
+python -m pip install --upgrade pip setuptools wheel
+pip install -r requirements.txt
+```
+
+---
+
+### 2.3 Проверка данных
+
+Убедитесь, что файлы реально лежат в `data/raw`:
+
+```bash
+ls -lah data/raw
+```
+
+---
+
+### 2.4 Порядок запуска пайплайна локально
+
+Проверка данных:
+
+```bash
+python scripts/run_data_check.py
+```
+
+Feature engineering:
+
+```bash
+python scripts/run_feature_engineering.py
+```
+
+Обучение:
+
+```bash
+python scripts/run_train.py
+```
+
+Проверка дрейфа:
+
+```bash
+python scripts/run_drift_check.py
+```
+
+SHAP explainability:
+
+```bash
+python scripts/run_explain.py
+```
+
+Benchmark:
+
+```bash
+python scripts/run_benchmark.py
+```
+
+---
+
+### 2.5 Запуск API
+
+```bash
+python scripts/run_api.py
+```
+
+После запуска API будет доступен по адресу:
+
+- `http://localhost:8000`
+- `http://localhost:8000/docs`
+
+Основные endpoints:
+
+- `/health`
+- `/ready`
+- `/predict`
+- `/predict_batch`
+
+---
+
+### 2.6 Запуск dashboard
+
+В отдельном терминале с тем же активированным окружением:
+
+```bash
+python scripts/run_dashboard.py
+```
+
+После запуска dashboard будет доступен по адресу:
+
+- `http://localhost:8501`
+
+---
+
+### 2.7 Тесты
+
+```bash
+pytest -q
+```
+
+---
+
+### 2.8 Завершение работы с окружением
+
+```bash
+deactivate
+```
+
+Если нужно удалить окружение:
+
+Linux / macOS:
+
+```bash
+rm -rf .venv
+```
+
+Windows PowerShell:
+
+```powershell
+Remove-Item -Recurse -Force .venv
+```
+
+---
+
+## 3. Запуск через Docker Compose
+
+Этот режим нужен для полного MLOps-контура: PostgreSQL, MLflow, Airflow, API, dashboard и других сервисов.
+
+---
+
+### 3.1 Проверка Docker
+
+```bash
+docker --version
+docker-compose --version
+```
+
+---
+
+### 3.2 Инициализация PostgreSQL
+
+Если используется init-скрипт для создания отдельных БД, он должен лежать в директории, которая монтируется в контейнер PostgreSQL, например:
+
+- `docker/postgres/init/init-multiple-dbs.sql`
+
+Пример содержимого:
+
+```sql
+CREATE DATABASE airflow;
+CREATE DATABASE mlflow;
+```
+
+Важно: скрипты из `/docker-entrypoint-initdb.d` выполняются только при **первом создании volume** PostgreSQL.
+
+---
+
+### 3.3 Чистый запуск с нуля
+
+Если нужно развернуть всё заново и применить init-скрипты:
+
+```bash
+docker-compose down -v
+docker-compose up -d postgres
+```
+
+Проверить список баз:
+
+```bash
+docker-compose exec postgres psql -U aml_user -d postgres -c "\l"
+```
+
+Ожидаются базы:
+
+- `postgres`
+- `airflow`
+- `mlflow`
+
+---
+
+### 3.4 Запуск MLflow
+
+```bash
+docker-compose up -d mlflow
+docker-compose logs -f mlflow
+```
+
+Проверка, что MLflow отвечает:
+
+```bash
+docker-compose exec mlflow python -c "import urllib.request; print(urllib.request.urlopen('http://localhost:5000').status)"
+```
+
+Ожидаемый результат:
+
+- `200`
+
+Если есть контейнер `airflow-webserver`, можно проверить так:
+
+```bash
+docker-compose exec airflow-webserver python -c "import requests; print(requests.get('http://mlflow:5000', timeout=5).status_code)"
+```
+
+---
+
+### 3.5 Запуск Airflow
+
+### Важно: ``AIRFLOW_UID``
+
+Airflow в Docker работает с локально примонтированными директориями проекта, поэтому ему нужен корректный ``AIRFLOW_UID``.
+
+В файле ``.env`` должно быть указано, например:
+
+```env
+AIRFLOW_UID=1000
+```
+
+Проверить свой UID можно так:
+
+```bash
+id -u
+```
+
+Если команда возвращает не ``1000``, замени значение ``AIRFLOW_UID`` в ``.env`` на своё.
+
+Это нужно для того, чтобы:
+
+- контейнеры Airflow корректно запускались;
+- логи и артефакты создавались с ожидаемыми правами;
+- не возникали ошибки доступа к файлам на хосте;
+- не приходилось вручную исправлять владельца файлов через ``chown``.
+
+Если ``AIRFLOW_UID`` задан неверно или не задан вообще, возможны проблемы со стартом Airflow и ошибки прав доступа при записи в ``logs/`, ``data/processed/` и ``artifacts/`.
+
+Запуск:
+
+```bash
+docker-compose up -d airflow-init airflow-webserver airflow-scheduler
+```
+
+Проверить контейнеры:
+
+```bash
+docker-compose ps
+```
+
+Проверить DAG'и:
+
+```bash
+docker-compose exec airflow-webserver airflow dags list
+```
+
+Airflow UI:
+
+- `http://localhost:8080`
+
+Если в init-команде создаётся пользователь admin, вход обычно такой:
+
+- login: `admin`
+- password: `admin`
+
+---
+
+### 3.6 Запуск API и dashboard в Docker
+
+```bash
+docker-compose up -d api dashboard
+```
+
+Проверка:
+
+- API: `http://localhost:8000/docs`
+- Dashboard: `http://localhost:8501`
+
+---
+
+### 3.7 Полный запуск всех сервисов
+
+Если compose уже настроен корректно:
+
+```bash
+docker-compose up -d
+```
+
+Проверка статуса:
+
+```bash
+docker-compose ps
+```
+
+---
+
+## 4. Проверка работоспособности
+
+### 4.1 Проверка training pipeline внутри контейнера
+
+```bash
+docker-compose exec airflow-webserver python -u -c "from src.pipelines.training_pipeline import run_training_pipeline; print(run_training_pipeline('base'))"
+```
+
+Если всё хорошо, pipeline проходит без traceback и сохраняет артефакты.
+
+---
+
+### 4.2 Проверка Airflow
+
+Проверить DAG'и через CLI:
+
+```bash
+docker-compose exec airflow-webserver airflow dags list
+docker-compose exec airflow-webserver airflow tasks list aml_training_dag
+```
+
+Также можно открыть Airflow UI и запустить DAG вручную.
+
+---
+
+### 4.3 Проверка логов
+
+```bash
+docker-compose logs --tail=200 mlflow
+docker-compose logs --tail=200 airflow-webserver
+docker-compose logs --tail=200 airflow-scheduler
+docker-compose logs --tail=200 api
+docker-compose logs --tail=200 dashboard
+```
+
+Для непрерывного просмотра:
+
+```bash
+docker-compose logs -f mlflow
+```
+
+---
+
+## 5. Где искать результаты
+
+Основные артефакты сохраняются в:
+
+- `data/processed/`
+- `artifacts/reports/`
+- `artifacts/metrics/feature_spec.yaml`
+- `artifacts/metrics/training_summary.json`
+- `artifacts/models/`
+- `artifacts/shap/`
+- `artifacts/predictions/`
+
+---
+
+## 6. Как остановить проект
+
+Остановить контейнеры без удаления данных:
+
+```bash
+docker-compose stop
+```
+
+Остановить и удалить контейнеры:
+
+```bash
+docker-compose down
+```
+
+Полностью удалить контейнеры и volume'ы:
+
+```bash
+docker-compose down -v
+```
+
+---
+
+## 7. Как очистить проект
+
+Удалить артефакты:
+
+```bash
+rm -rf artifacts/*
+rm -rf data/processed/*
+```
+
+Если есть проблемы с правами:
+
+```bash
+sudo rm -rf artifacts
+mkdir -p artifacts/metrics artifacts/models artifacts/reports artifacts/data artifacts/predictions artifacts/shap
+```
+
+Полная очистка контейнерной инфраструктуры:
+
+```bash
+docker-compose down -v
+```
+
+После этого базы `airflow` и `mlflow` будут создаваться заново.
+
+---
+
+## 8. Частые проблемы
+
+### Проблема: database `mlflow` does not exist
+
+Проверить список баз:
+
+```bash
+docker-compose exec postgres psql -U aml_user -d postgres -c "\l"
+```
+
+Если базы нет, значит init-скрипт не выполнился, либо volume PostgreSQL уже существовал до добавления SQL-файла.
+
+Решение: сделать чистый сброс PostgreSQL через `docker-compose down -v` и поднять заново.
+
+---
+
+### Проблема: Airflow пишет `You need to upgrade the database`
+
+Причина: Airflow metadata DB не инициализирована или используется не та база.
+
+Нужно, чтобы Airflow использовал отдельную БД `airflow`, а MLflow — отдельную БД `mlflow`.
+
+После исправления конфигурации нужно поднять инфраструктуру заново.
+
+---
+
+### Проблема: `Permission denied` в `artifacts`
+
+Причина: часть файлов создана контейнером под другим пользователем.
+
+Быстрое решение:
+
+```bash
+sudo rm -rf artifacts
+mkdir -p artifacts/metrics artifacts/models artifacts/reports artifacts/data artifacts/predictions artifacts/shap
+```
+
+---
+
+### Проблема: MLflow долго стартует
+
+Если внутри контейнера каждый раз выполняется `pip install`, запуск может быть медленным.
+
+Это не критическая ошибка, но лучше вынести установку зависимостей в отдельный Dockerfile для сервиса MLflow.
+
+---
+
+## 9. Полезные команды
+
+Поднять один сервис:
+
+```bash
+docker-compose up -d mlflow
+```
+
+Пересоздать один сервис:
+
+```bash
+docker-compose up -d --force-recreate --no-deps mlflow
+```
+
+Зайти в контейнер:
+
+```bash
+docker-compose exec airflow-webserver bash
+docker-compose exec postgres psql -U aml_user -d postgres
+```
+
+---
+
+## 10. Рекомендуемый порядок действий
+
+Для локальной Python-отладки:
+
+1. data check;
+2. feature engineering;
+3. training;
+4. drift check;
+5. explainability;
+6. API;
+7. dashboard.
+
+Для полного Docker-запуска:
+
+1. `docker-compose down -v`
+2. `docker-compose up -d postgres`
+3. проверить, что есть базы `airflow` и `mlflow`
+4. `docker-compose up -d mlflow`
+5. проверить, что MLflow отдаёт `200`
+6. `docker-compose up -d airflow-init airflow-webserver airflow-scheduler`
+7. `docker-compose up -d api dashboard`
+
+----- END FILE: ./docs/setup.md -----
+
+----- FILE: ./dump/dump_project.sh -----
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="${1:-$HOME/HSE_AML_MLOps_pipeline}"
+OUTPUT_FILE="${2:-project_dump.txt}"
+MAX_TEXT_FILE_SIZE="${MAX_TEXT_FILE_SIZE:-524288}" # 512 KB
+
+if [[ ! -d "$ROOT_DIR" ]]; then
+  echo "Директория не найдена: $ROOT_DIR" >&2
+  exit 1
+fi
+
+should_skip_path() {
+  local path="$1"
+
+  case "$path" in
+    */.git/*|*/.idea/*|*/.vscode/*|*/.venv/*|*/venv/*|*/env/*|*/__pycache__/*|\
+*/node_modules/*|*/mlruns/*|*/logs/*|*/artifacts/*|*/postgres_data/*|*/minio_data/*|\
+*/.pytest_cache/*|*/.mypy_cache/*|*/.ruff_cache/*|*/.tox/*|*/.cache/*|\
+*/dist/*|*/build/*|*/site-packages/*|*/htmlcov/*|*/coverage/*|*/.eggs/*|*/.next/*)
+      return 0
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
+should_include_file() {
+  local file="$1"
+  local base lower
+
+  base="$(basename "$file")"
+  lower="$(printf '%s' "$base" | tr '[:upper:]' '[:lower:]')"
+
+  case "$lower" in
+    dockerfile|makefile|readme|readme.md|license|license.md|requirements.txt|\
+pyproject.toml|poetry.lock|pipfile|pipfile.lock|setup.py|setup.cfg|tox.ini|\
+.gitignore|.dockerignore|.env|.env.example|docker-compose.yml|docker-compose.yaml)
+      return 0
+      ;;
+  esac
+
+  case "$lower" in
+    *.py|*.sh|*.bash|*.zsh|*.md|*.txt|*.yml|*.yaml|*.json|*.toml|*.ini|*.cfg|*.conf|*.sql|*.xml)
+      return 0
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
+is_text_file() {
+  local file="$1"
+
+  if ! command -v file >/dev/null 2>&1; then
+    return 0
+  fi
+
+  if file --mime "$file" | grep -q 'charset=binary'; then
+    return 1
+  fi
+
+  return 0
+}
+
+get_file_size() {
+  local file="$1"
+
+  if stat -c%s "$file" >/dev/null 2>&1; then
+    stat -c%s "$file"
+    return 0
+  fi
+
+  if stat -f%z "$file" >/dev/null 2>&1; then
+    stat -f%z "$file"
+    return 0
+  fi
+
+  wc -c < "$file"
+}
+
+contains_embedded_binary_blob() {
+  local file="$1"
+
+  if grep -qE 'data:(font|image|application)/[^;]+;base64,' "$file" 2>/dev/null; then
+    return 0
+  fi
+
+  if awk 'length($0) > 5000 { found=1; exit } END { exit !found }' "$file" 2>/dev/null; then
+    return 0
+  fi
+
+  return 1
+}
+
+relative_path() {
+  local file="$1"
+
+  if command -v realpath >/dev/null 2>&1; then
+    realpath --relative-to="$ROOT_DIR" "$file" 2>/dev/null && return 0
+  fi
+
+  python3 - "$ROOT_DIR" "$file" <<'PY'
+import os
+import sys
+print(os.path.relpath(sys.argv[2], sys.argv[1]))
+PY
+}
+
+{
+  echo "PROJECT ROOT: $ROOT_DIR"
+  echo "GENERATED AT: $(date '+%Y-%m-%d %H:%M:%S')"
+  echo "MAX TEXT FILE SIZE: $MAX_TEXT_FILE_SIZE bytes"
+  echo
+
+  echo "===================="
+  echo "DIRECTORY STRUCTURE"
+  echo "===================="
+  echo
+
+  find "$ROOT_DIR" \
+    \( -path "*/.git" -o -path "*/.idea" -o -path "*/.vscode" -o -path "*/.venv" -o -path "*/venv" -o -path "*/env" -o \
+       -path "*/__pycache__" -o -path "*/node_modules" -o -path "*/mlruns" -o -path "*/logs" -o -path "*/artifacts" -o \
+       -path "*/postgres_data" -o -path "*/minio_data" -o -path "*/.pytest_cache" -o -path "*/.mypy_cache" -o \
+       -path "*/.ruff_cache" -o -path "*/.tox" -o -path "*/.cache" -o -path "*/dist" -o -path "*/build" -o \
+       -path "*/site-packages" -o -path "*/htmlcov" -o -path "*/coverage" -o -path "*/.eggs" -o -path "*/.next" \) -prune \
+    -o -print | sed "s|$ROOT_DIR|.|" | sort
+
+  echo
+  echo "================="
+  echo "FILES CONTENT"
+  echo "================="
+  echo
+
+  while IFS= read -r file; do
+    if should_skip_path "$file"; then
+      continue
+    fi
+
+    if [[ ! -f "$file" ]]; then
+      continue
+    fi
+
+    if ! should_include_file "$file"; then
+      continue
+    fi
+
+    if ! is_text_file "$file"; then
+      continue
+    fi
+
+    if [[ "$(get_file_size "$file")" -gt "$MAX_TEXT_FILE_SIZE" ]]; then
+      continue
+    fi
+
+    if contains_embedded_binary_blob "$file"; then
+      continue
+    fi
+
+    rel_path="$(relative_path "$file")"
+
+    echo "----- FILE: ./$rel_path -----"
+    cat "$file"
+    echo
+    echo "----- END FILE: ./$rel_path -----"
+    echo
+  done < <(
+    find "$ROOT_DIR" \
+      \( -path "*/.git" -o -path "*/.idea" -o -path "*/.vscode" -o -path "*/.venv" -o -path "*/venv" -o -path "*/env" -o \
+         -path "*/__pycache__" -o -path "*/node_modules" -o -path "*/mlruns" -o -path "*/logs" -o -path "*/artifacts" -o \
+         -path "*/postgres_data" -o -path "*/minio_data" -o -path "*/.pytest_cache" -o -path "*/.mypy_cache" -o \
+         -path "*/.ruff_cache" -o -path "*/.tox" -o -path "*/.cache" -o -path "*/dist" -o -path "*/build" -o \
+         -path "*/site-packages" -o -path "*/htmlcov" -o -path "*/coverage" -o -path "*/.eggs" -o -path "*/.next" \) -prune \
+      -o -type f -print | sort
+  )
+
+} > "$OUTPUT_FILE"
+
+echo "Готово: $OUTPUT_FILE"
+
+----- END FILE: ./dump/dump_project.sh -----
+
+----- FILE: ./dump/project_dump.txt -----
+PROJECT ROOT: /home/max/HSE_AML_MLOps_pipeline
+GENERATED AT: 2026-04-29 13:06:12
+MAX TEXT FILE SIZE: 524288 bytes
+
+====================
+DIRECTORY STRUCTURE
+====================
+
+.
+./.assets
+./.assets/1.jpg
+./.assets/2.jpg
+./.assets/3.jpg
+./.assets/schema.svg
+./config
+./config/api_config.yaml
+./config/data_config.yaml
+./config/feature_config.yaml
+./config/model_config.yaml
+./config/settings.py
+./dags
+./dags/aml_drift_dag.py
+./dags/aml_training_dag.py
+./dashboard
+./dashboard/app.py
+./data
+./data/processed
+./data/processed/base_features.csv
+./data/processed/base_processed.csv
+./data/raw
+./data/raw/Base.csv
+./data/raw/synthaml_alerts.csv
+./data/raw/synthaml_transactions.csv
+./data/raw/Variant I.csv
+./data/raw/Variant II.csv
+./data/reference
+./docker
+./docker-compose.yml
+./Dockerfile
+./Dockerfile.airflow
+./.dockerignore
+./docker/postgres
+./docker/postgres/init
+./docker/postgres/init/init-multiple-dbs.sql
+./docs
+./docs/setup.md
+./dump
+./dump/dump_project.sh
+./dump/project_dump.txt
+./.env
+./.env.docker.local
+./.env.example
+./.gitignore
+./LICENSE
+./Makefile
+./notebooks
+./notebooks/eda.ipynb
+./README.md
+./requirements-airflow-runtime.txt
+./requirements-airflow.txt
+./requirements-dev.txt
+./requirements.txt
+./scripts
+./scripts/fix_local_permissions.sh
+./scripts/promote_model.py
+./scripts/run_api.py
+./scripts/run_benchmark.py
+./scripts/run_dashboard.py
+./scripts/run_data_check.py
+./scripts/run_drift_check.py
+./scripts/run_explain.py
+./scripts/run_feature_engineering.py
+./scripts/run_prepare_synthaml.py
+./scripts/run_synthaml_thresholds.py
+./scripts/run_train.py
+./src
+./src/api
+./src/api/dependencies.py
+./src/api/__init__.py
+./src/api/init.py
+./src/api/main.py
+./src/api/schemas.py
+./src/api/service.py
+./src/data
+./src/data/__init__.py
+./src/data/init.py
+./src/data/loaders.py
+./src/data/schemas.py
+./src/data/synthaml_0.py
+./src/data/synthaml_1.py
+./src/data/synthaml.py
+./src/data/transformers.py
+./src/data/validators.py
+./src/explainability
+./src/explainability/__init__.py
+./src/explainability/init.py
+./src/explainability/shap_explainer.py
+./src/features
+./src/features/engineering.py
+./src/features/__init__.py
+./src/features/init.py
+./src/__init__.py
+./src/init.py
+./src/models
+./src/models/benchmark.py
+./src/models/evaluate.py
+./src/models/__init__.py
+./src/models/init.py
+./src/models/predict.py
+./src/models/registry.py
+./src/models/train.py
+./src/monitoring
+./src/monitoring/drift.py
+./src/monitoring/__init__.py
+./src/monitoring/init.py
+./src/pipelines
+./src/pipelines/benchmark_pipeline.py
+./src/pipelines/drift_pipeline.py
+./src/pipelines/__init__.py
+./src/pipelines/init.py
+./src/pipelines/training_pipeline.py
+./src/utils
+./src/utils/common.py
+./src/utils/__init__.py
+./src/utils/init.py
+./src/utils/io.py
+./src/utils/logger.py
+./src/utils/paths.py
+./tests
+./tests/__init__.py
+./tests/init.py
+./tests/test_api.py
+./tests/test_benchmark.py
+./tests/test_drift.py
+./tests/test_explainability.py
+./tests/test_features.py
+./tests/test_loaders.py
+./tests/test_training.py
+./tests/test_validators.py
+
+=================
+FILES CONTENT
+=================
+
+----- FILE: ./config/api_config.yaml -----
+api:
+  service_name: aml-scoring-api
+  version: 1.0.0
+  recommendation_thresholds:
+    red: 0.80
+    yellow: 0.50
+
+----- END FILE: ./config/api_config.yaml -----
+
+----- FILE: ./config/data_config.yaml -----
+dataset:
+  target_column: fraud_bool
+  id_columns: []
+  drop_columns: []
+
+split:
+  train_size: 0.7
+  valid_size: 0.15
+  test_size: 0.15
+  shuffle: false
+
+drift:
+  numerical_drift_threshold: 0.1
+  share_of_drifted_columns_threshold: 0.3
+  stattest: psi
+
+sources:
+  base_dataset_path: data/raw/Base.csv
+  drift_dataset_path_1: data/raw/Variant I.csv
+  drift_dataset_path_2: data/raw/Variant II.csv
+  synthaml_alerts_path: data/raw/synthaml_alerts.csv
+  synthaml_transactions_path: data/raw/synthaml_transactions.csv
+
+----- END FILE: ./config/data_config.yaml -----
+
+----- FILE: ./config/feature_config.yaml -----
+features:
+  categorical:
+    - payment_type
+    - employment_status
+    - housing_status
+    - source
+    - device_os
+
+  binary:
+    - email_is_free
+    - phone_home_valid
+    - phone_mobile_valid
+    - has_other_cards
+    - foreign_request
+    - keep_alive_session
+
+  numerical:
+    - income
+    - name_email_similarity
+    - prev_address_months_count
+    - current_address_months_count
+    - customer_age
+    - days_since_request
+    - intended_balcon_amount
+    - zip_count_4w
+    - velocity_6h
+    - velocity_24h
+    - velocity_4w
+    - bank_branch_count_8w
+    - date_of_birth_distinct_emails_4w
+    - credit_risk_score
+    - bank_months_count
+    - proposed_credit_limit
+    - session_length_in_minutes
+    - device_distinct_emails_8w
+    - device_fraud_count
+    - month
+
+engineered:
+  create_time_features: true
+  create_velocity_features: true
+  create_interaction_features: true
+
+----- END FILE: ./config/feature_config.yaml -----
+
+----- FILE: ./config/model_config.yaml -----
+model:
+  type: lightgbm
+
+lightgbm:
+  objective: binary
+  metric: auc
+  boosting_type: gbdt
+  learning_rate: 0.05
+  n_estimators: 300
+  num_leaves: 31
+  max_depth: -1
+  subsample: 0.8
+  colsample_bytree: 0.8
+  reg_alpha: 0.0
+  reg_lambda: 0.0
+  random_state: 42
+  n_jobs: -1
+  class_weight: balanced
+
+xgboost:
+  objective: binary:logistic
+  eval_metric: auc
+  learning_rate: 0.05
+  n_estimators: 300
+  max_depth: 6
+  subsample: 0.8
+  colsample_bytree: 0.8
+  reg_alpha: 0.0
+  reg_lambda: 1.0
+  random_state: 42
+  n_jobs: -1
+  scale_pos_weight: 1.0
+
+training:
+  threshold: 0.5
+  cv_folds: 3
+  log_model: true
+
+----- END FILE: ./config/model_config.yaml -----
+
+----- FILE: ./config/settings.py -----
+from pathlib import Path
+
+from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
+
+    app_env: str = Field(default="local", alias="APP_ENV")
+    app_name: str = Field(default="aml-pipeline", alias="APP_NAME")
+
+    data_raw_dir: str = Field(default="data/raw", alias="DATA_RAW_DIR")
+    data_processed_dir: str = Field(default="data/processed", alias="DATA_PROCESSED_DIR")
+    data_reference_dir: str = Field(default="data/reference", alias="DATA_REFERENCE_DIR")
+    artifacts_dir: str = Field(default="artifacts", alias="ARTIFACTS_DIR")
+
+    base_dataset_path: str = Field(default="data/raw/Base.csv", alias="BASE_DATASET_PATH")
+    drift_dataset_path_1: str = Field(default="data/raw/Variant I.csv", alias="DRIFT_DATASET_PATH_1")
+    drift_dataset_path_2: str = Field(default="data/raw/Variant II.csv", alias="DRIFT_DATASET_PATH_2")
+    synthaml_alerts_path: str = Field(default="data/raw/synthaml_alerts.csv", alias="SYNTHAML_ALERTS_PATH")
+    synthaml_transactions_path: str = Field(default="data/raw/synthaml_transactions.csv", alias="SYNTHAML_TRANSACTIONS_PATH")
+
+    target_column: str = Field(default="fraud_bool", alias="TARGET_COLUMN")
+    random_seed: int = Field(default=42, alias="RANDOM_SEED")
+
+    mlflow_tracking_uri: str = Field(default="file:./mlruns", alias="MLFLOW_TRACKING_URI")
+    mlflow_experiment_name: str = Field(default="aml_detection", alias="MLFLOW_EXPERIMENT_NAME")
+
+    postgres_host: str = Field(default="localhost", alias="POSTGRES_HOST")
+    postgres_port: int = Field(default=5432, alias="POSTGRES_PORT")
+    postgres_db: str = Field(default="aml", alias="POSTGRES_DB")
+    postgres_user: str = Field(default="aml_user", alias="POSTGRES_USER")
+    postgres_password: str = Field(default="aml_password", alias="POSTGRES_PASSWORD")
+
+    minio_endpoint: str = Field(default="localhost:9000", alias="MINIO_ENDPOINT")
+    minio_access_key: str = Field(default="minioadmin", alias="MINIO_ACCESS_KEY")
+    minio_secret_key: str = Field(default="minioadmin", alias="MINIO_SECRET_KEY")
+    minio_bucket: str = Field(default="mlflow", alias="MINIO_BUCKET")
+
+    api_host: str = Field(default="0.0.0.0", alias="API_HOST")
+    api_port: int = Field(default=8000, alias="API_PORT")
+    dashboard_api_url: str = Field(default="http://localhost:8000", alias="DASHBOARD_API_URL")
+
+
+
+    @property
+    def project_root(self) -> Path:
+        return Path(__file__).resolve().parent.parent
+
+    @property
+    def base_dataset(self) -> Path:
+        return self.project_root / self.base_dataset_path
+
+    @property
+    def drift_dataset_1(self) -> Path:
+        return self.project_root / self.drift_dataset_path_1
+
+    @property
+    def drift_dataset_2(self) -> Path:
+        return self.project_root / self.drift_dataset_path_2
+
+    @property
+    def synthaml_alerts(self) -> Path:
+        return self.project_root / self.synthaml_alerts_path
+
+    @property
+    def synthaml_transactions(self) -> Path:
+        return self.project_root / self.synthaml_transactions_path
+
+
+settings = Settings()
+
+----- END FILE: ./config/settings.py -----
+
+----- FILE: ./dags/aml_drift_dag.py -----
+from __future__ import annotations
+
+from datetime import datetime, timedelta
+from pprint import pformat
+
+from airflow.decorators import dag, task
+from airflow.operators.empty import EmptyOperator
+from airflow.operators.trigger_dagrun import TriggerDagRunOperator
+
+from src.pipelines.drift_pipeline import run_drift_pipeline
+from src.utils.logger import get_logger
+
+logger = get_logger(__name__)
+
+
+default_args = {
+    "owner": "aml-mlops",
+    "depends_on_past": False,
+    "email_on_failure": False,
+    "email_on_retry": False,
+    "retries": 2,
+    "retry_delay": timedelta(minutes=5),
+}
+
+
+@dag(
+    dag_id="aml_drift_dag",
+    description="Проверка дрейфа данных и запуск переобучения при необходимости",
+    default_args=default_args,
+    start_date=datetime(2025, 1, 1),
+    schedule="@daily",
+    catchup=False,
+    tags=["aml", "drift", "mlops"],
+)
+def aml_drift_dag():
+    start = EmptyOperator(task_id="start")
+    no_drift = EmptyOperator(task_id="no_drift_detected")
+    finish = EmptyOperator(task_id="finish")
+
+    @task(task_id="run_drift_check")
+    def run_drift_check_task(current_dataset_name: str = "variant_1") -> dict:
+        logger.info(f"Запуск drift-check для датасета '{current_dataset_name}'")
+
+        summary = run_drift_pipeline(
+            reference_dataset_name="base",
+            current_dataset_name=current_dataset_name,
+        )
+
+        logger.info("Drift-check завершён")
+        logger.info(pformat(summary))
+
+        return summary
+
+    @task.branch(task_id="branch_on_drift")
+    def branch_on_drift_task(drift_summary: dict) -> str:
+        drift_detected = bool(drift_summary["drift_detected"])
+
+        if drift_detected:
+            logger.info("Обнаружен дрейф, переход в ветку retraining")
+            return "trigger_retraining"
+
+        logger.info("Дрейф не обнаружен, завершение без переобучения")
+        return "no_drift_detected"
+
+    trigger_retraining = TriggerDagRunOperator(
+        task_id="trigger_retraining",
+        trigger_dag_id="aml_training_dag",
+        conf={"dataset_name": "base"},
+        wait_for_completion=False,
+        reset_dag_run=True,
+    )
+
+    drift_summary = run_drift_check_task()
+    branch_decision = branch_on_drift_task(drift_summary)
+
+    start >> drift_summary >> branch_decision
+    branch_decision >> trigger_retraining >> finish
+    branch_decision >> no_drift >> finish
+
+
+aml_drift_dag()
+
+----- END FILE: ./dags/aml_drift_dag.py -----
+
+----- FILE: ./dags/aml_training_dag.py -----
+from __future__ import annotations
+
+from datetime import datetime, timedelta
+from pprint import pformat
+
+from airflow.decorators import dag, task
+from airflow.operators.empty import EmptyOperator
+from airflow.operators.python import get_current_context
+
+from src.pipelines.training_pipeline import run_training_pipeline
+from src.utils.logger import get_logger
+
+logger = get_logger(__name__)
+
+
+default_args = {
+    "owner": "aml-mlops",
+    "depends_on_past": False,
+    "email_on_failure": False,
+    "email_on_retry": False,
+    "retries": 2,
+    "retry_delay": timedelta(minutes=5),
+}
+
+
+@dag(
+    dag_id="aml_training_dag",
+    description="Обучение AML-модели на базовом датасете",
+    default_args=default_args,
+    start_date=datetime(2025, 1, 1),
+    schedule=None,
+    catchup=False,
+    tags=["aml", "training", "mlops"],
+)
+def aml_training_dag():
+    start = EmptyOperator(task_id="start")
+    finish = EmptyOperator(task_id="finish")
+
+    @task(task_id="read_runtime_config")
+    def read_runtime_config_task() -> dict:
+        context = get_current_context()
+        dag_run = context.get("dag_run")
+
+        conf = dag_run.conf if dag_run and dag_run.conf else {}
+        dataset_name = conf.get("dataset_name", "base")
+
+        runtime_config = {
+            "dataset_name": dataset_name,
+        }
+
+        logger.info(f"Runtime-конфигурация прочитана: {runtime_config}")
+        return runtime_config
+
+    @task(task_id="run_training")
+    def run_training_task(runtime_config: dict) -> dict:
+        dataset_name = runtime_config["dataset_name"]
+
+        logger.info(f"Запуск задачи обучения для датасета '{dataset_name}'")
+
+        summary = run_training_pipeline(dataset_name=dataset_name)
+
+        logger.info("Задача обучения завершена")
+        logger.info(pformat(summary))
+
+        return summary
+
+    runtime_config = read_runtime_config_task()
+    training_summary = run_training_task(runtime_config)
+
+    start >> runtime_config >> training_summary >> finish
+
+
+aml_training_dag()
+
+----- END FILE: ./dags/aml_training_dag.py -----
+
+----- FILE: ./dashboard/app.py -----
+from __future__ import annotations
+
+import pandas as pd
+import requests
+import streamlit as st
+
+from config.settings import settings
+from src.utils.io import load_dataframe, read_yaml
+from src.utils.paths import get_artifacts_dir
+
+st.set_page_config(
+    page_title="AML Dashboard",
+    page_icon="🚨",
+    layout="wide",
+)
+
+API_URL = settings.dashboard_api_url
+
+INTEGER_COLUMNS = [
+    "prev_address_months_count",
+    "current_address_months_count",
+    "customer_age",
+    "days_since_request",
+    "zip_count_4w",
+    "bank_branch_count_8w",
+    "date_of_birth_distinct_emails_4w",
+    "email_is_free",
+    "phone_home_valid",
+    "phone_mobile_valid",
+    "bank_months_count",
+    "has_other_cards",
+    "foreign_request",
+    "keep_alive_session",
+    "device_distinct_emails_8w",
+    "device_fraud_count",
+    "month",
+]
+
+FLOAT_COLUMNS = [
+    "income",
+    "name_email_similarity",
+    "intended_balcon_amount",
+    "velocity_6h",
+    "velocity_24h",
+    "velocity_4w",
+    "credit_risk_score",
+    "proposed_credit_limit",
+    "session_length_in_minutes",
+]
+
+STRING_COLUMNS = [
+    "payment_type",
+    "employment_status",
+    "housing_status",
+    "source",
+    "device_os",
+]
+
+
+@st.cache_data
+def load_local_dataset(dataset_name: str) -> pd.DataFrame:
+    dataset_map = {
+        "Base": settings.base_dataset,
+        "Variant I": settings.drift_dataset_1,
+        "Variant II": settings.drift_dataset_2,
+    }
+
+    path = dataset_map[dataset_name]
+    return load_dataframe(path)
+
+
+def check_api_health() -> dict:
+    try:
+        response = requests.get(f"{API_URL}/health", timeout=10)
+        response.raise_for_status()
+        return response.json()
+    except Exception as exc:
+        return {
+            "status": "error",
+            "is_model_loaded": False,
+            "loaded_model_type": None,
+            "error": str(exc),
+        }
+
+
+def prepare_transactions_payload(df: pd.DataFrame) -> list[dict]:
+    working_df = df.drop(columns=["fraud_bool"], errors="ignore").copy()
+
+    for column in INTEGER_COLUMNS:
+        if column in working_df.columns:
+            working_df[column] = pd.to_numeric(working_df[column], errors="coerce").round().astype("Int64")
+
+    for column in FLOAT_COLUMNS:
+        if column in working_df.columns:
+            working_df[column] = pd.to_numeric(working_df[column], errors="coerce").astype(float)
+
+    for column in STRING_COLUMNS:
+        if column in working_df.columns:
+            working_df[column] = working_df[column].astype(str)
+
+    records = working_df.where(pd.notnull(working_df), None).to_dict(orient="records")
+    return records
+
+
+def score_batch(df: pd.DataFrame) -> list[dict]:
+    payload = {
+        "transactions": prepare_transactions_payload(df)
+    }
+
+    response = requests.post(
+        f"{API_URL}/predict_batch",
+        json=payload,
+        timeout=120,
+    )
+
+    if not response.ok:
+        raise ValueError(f"API error {response.status_code}: {response.text}")
+
+    return response.json()["items"]
+
+
+def load_drift_summary() -> list[dict]:
+    reports_dir = get_artifacts_dir() / "reports"
+    if not reports_dir.exists():
+        return []
+
+    summaries = []
+    for path in sorted(reports_dir.glob("drift_*.yaml")):
+        try:
+            report = read_yaml(path)
+            metrics = report["metrics"][0]["result"]
+
+            summaries.append(
+                {
+                    "report_file": path.name,
+                    "dataset_drift": metrics.get("dataset_drift"),
+                    "share_of_drifted_columns": metrics.get("share_of_drifted_columns"),
+                    "number_of_drifted_columns": metrics.get("number_of_drifted_columns"),
+                    "number_of_columns": metrics.get("number_of_columns"),
+                }
+            )
+        except Exception:
+            continue
+
+    return summaries
+
+
+def recommendation_to_label(recommendation: str) -> str:
+    mapping = {
+        "red": "🔴 block",
+        "yellow": "🟡 review",
+        "green": "🟢 pass",
+    }
+    return mapping.get(recommendation, recommendation)
+
+
+def main() -> None:
+    st.title("🚨 AML MLOps Dashboard")
+    st.caption("Интерактивный интерфейс для анализа подозрительных финансовых операций")
+
+    with st.sidebar:
+        st.header("Настройки")
+        dataset_name = st.selectbox("Датасет", ["Base", "Variant I", "Variant II"], index=0)
+        sample_size = st.slider("Размер выборки", min_value=10, max_value=500, value=100, step=10)
+        run_scoring = st.button("Запустить batch scoring", type="primary")
+
+        st.markdown("---")
+        st.write("API URL:", API_URL)
+
+    st.subheader("Состояние API")
+    health = check_api_health()
+
+    if health.get("status") == "ok":
+        st.success(f"API доступен. Загружена модель: {health.get('loaded_model_type')}")
+    else:
+        st.error(f"API недоступен: {health.get('error', 'unknown error')}")
+
+    tab1, tab2, tab3 = st.tabs(["Скоринг транзакций", "Drift monitoring", "О системе"])
+
+    with tab1:
+        st.subheader("Скоринг транзакций")
+
+        df = load_local_dataset(dataset_name).head(sample_size)
+        st.write("Пример входных данных:")
+        st.dataframe(df.head(10), use_container_width=True)
+
+        if run_scoring:
+            with st.spinner("Выполняется scoring через FastAPI..."):
+                try:
+                    scored_items = score_batch(df)
+                    scored_df = pd.DataFrame(scored_items)
+
+                    scored_df["recommendation_label"] = scored_df["recommendation"].apply(recommendation_to_label)
+
+                    st.success(f"Скоринг завершён. Обработано записей: {len(scored_df)}")
+
+                    col1, col2, col3 = st.columns(3)
+                    col1.metric("Всего записей", len(scored_df))
+                    col2.metric("Красные", int((scored_df["recommendation"] == "red").sum()))
+                    col3.metric("Жёлтые", int((scored_df["recommendation"] == "yellow").sum()))
+
+                    st.markdown("### Результаты batch scoring")
+                    filter_values = st.multiselect(
+                        "Фильтр по рекомендации",
+                        options=["red", "yellow", "green"],
+                        default=["red", "yellow", "green"],
+                    )
+
+                    filtered_df = scored_df[scored_df["recommendation"].isin(filter_values)].copy()
+                    filtered_df = filtered_df.sort_values("prediction_score", ascending=False)
+
+                    st.dataframe(
+                        filtered_df[
+                            ["row_index", "prediction_score", "prediction_label", "recommendation_label"]
+                        ],
+                        use_container_width=True,
+                    )
+
+                    st.markdown("### Детальный просмотр транзакции")
+                    selected_row_index = st.selectbox(
+                        "Выберите строку",
+                        options=filtered_df["row_index"].tolist(),
+                    )
+
+                    selected_item = filtered_df[filtered_df["row_index"] == selected_row_index].iloc[0]
+
+                    col_a, col_b, col_c = st.columns(3)
+                    col_a.metric("Score", f"{selected_item['prediction_score']:.4f}")
+                    col_b.metric("Label", int(selected_item["prediction_label"]))
+                    col_c.metric("Recommendation", recommendation_to_label(selected_item["recommendation"]))
+
+                    st.markdown("#### Top positive factors")
+                    positive_df = pd.DataFrame(selected_item["top_positive_factors"])
+                    if not positive_df.empty:
+                        st.dataframe(positive_df, use_container_width=True)
+                    else:
+                        st.info("Положительные факторы риска отсутствуют")
+
+                    st.markdown("#### Top negative factors")
+                    negative_df = pd.DataFrame(selected_item["top_negative_factors"])
+                    if not negative_df.empty:
+                        st.dataframe(negative_df, use_container_width=True)
+                    else:
+                        st.info("Факторы, снижающие риск, отсутствуют")
+
+                    st.markdown("#### Human-readable explanation")
+                    for reason in selected_item["human_readable_reasons"]:
+                        st.write(f"- {reason}")
+
+                    st.markdown("#### Исходные поля выбранной записи")
+                    original_row = df.iloc[int(selected_row_index)]
+                    st.json(original_row.to_dict())
+
+                except Exception as exc:
+                    st.error(f"Ошибка batch scoring: {exc}")
+
+    with tab2:
+        st.subheader("Drift monitoring")
+
+        drift_summaries = load_drift_summary()
+        if not drift_summaries:
+            st.info("Drift-отчёты пока не найдены. Сначала выполнить pipeline drift-check.")
+        else:
+            drift_df = pd.DataFrame(drift_summaries)
+            st.dataframe(drift_df, use_container_width=True)
+
+            latest_report = drift_df.iloc[-1]
+            st.markdown("### Последний drift report")
+            st.write(f"Файл: `{latest_report['report_file']}`")
+            st.write(f"Dataset drift: `{latest_report['dataset_drift']}`")
+            st.write(f"Доля drifted columns: `{latest_report['share_of_drifted_columns']}`")
+            st.write(
+                f"Drifted columns: `{latest_report['number_of_drifted_columns']}` "
+                f"из `{latest_report['number_of_columns']}`"
+            )
+
+    with tab3:
+        st.subheader("О системе")
+        st.markdown(
+            """
+            **Технологический стек**
+            - Airflow: оркестрация пайплайнов
+            - MLflow: трекинг экспериментов и реестр моделей
+            - LightGBM / XGBoost: обучение моделей
+            - SHAP: интерпретация решений
+            - Evidently: детекция дрейфа
+            - FastAPI: REST API для инференса
+            - Streamlit: интерактивный дашборд
+            """
+        )
+
+        st.markdown("### Артефакты")
+        artifacts_dir = get_artifacts_dir()
+        st.write(f"Путь к артефактам: `{artifacts_dir}`")
+
+        feature_spec_path = artifacts_dir / "metrics" / "feature_spec.yaml"
+        if feature_spec_path.exists():
+            feature_spec = read_yaml(feature_spec_path)
+            st.write(f"Количество признаков: {len(feature_spec.get('feature_columns', []))}")
+            st.write(f"Категориальных: {len(feature_spec.get('categorical_columns', []))}")
+            st.write(f"Числовых: {len(feature_spec.get('numerical_columns', []))}")
+
+
+if __name__ == "__main__":
+    main()
+
+----- END FILE: ./dashboard/app.py -----
+
+----- FILE: ./docker-compose.yml -----
+services:
+  postgres:
+    image: postgres:15
+    container_name: aml_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: aml_user
+      POSTGRES_PASSWORD: aml_password
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d
+
+  minio:
+    image: minio/minio:latest
+    container_name: aml_minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+
+  mlflow:
+    image: python:3.10-slim
+    container_name: aml_mlflow
+    # user: "${UID}:${GID}"
+    working_dir: /app
+    restart: unless-stopped
+    volumes:
+      - ./:/app
+    command: >
+      bash -lc 'pip install mlflow==2.17.0 boto3 psycopg2-binary &&
+      python -c "import socket,time; [socket.create_connection((\"postgres\",5432),2).close() or exit() for _ in range(60) if not time.sleep(2)]" &&
+      mlflow server
+      --backend-store-uri postgresql://aml_user:aml_password@postgres:5432/mlflow
+      --default-artifact-root ./mlruns
+      --host 0.0.0.0
+      --port 5000'
+    ports:
+      - "5000:5000"
+    depends_on:
+      - postgres
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: aml_api
+    user: "${UID}:${GID}"
+    working_dir: /app
+    restart: unless-stopped
+    command: python scripts/run_api.py
+    volumes:
+      - ./:/app
+    environment:
+      APP_ENV: docker
+      APP_NAME: aml-pipeline
+      DATA_RAW_DIR: data/raw
+      DATA_PROCESSED_DIR: data/processed
+      DATA_REFERENCE_DIR: data/reference
+      ARTIFACTS_DIR: artifacts
+      BASE_DATASET_PATH: data/raw/Base.csv
+      DRIFT_DATASET_PATH_1: data/raw/Variant I.csv
+      DRIFT_DATASET_PATH_2: data/raw/Variant II.csv
+      TARGET_COLUMN: fraud_bool
+      RANDOM_SEED: 42
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+      MLFLOW_EXPERIMENT_NAME: aml_detection
+      API_HOST: 0.0.0.0
+      API_PORT: 8000
+      DASHBOARD_API_URL: http://api:8000
+      PYTHONPATH: /app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - mlflow
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: aml_dashboard
+    user: "${UID}:${GID}"
+    working_dir: /app
+    restart: unless-stopped
+    command: python scripts/run_dashboard.py
+    volumes:
+      - ./:/app
+    environment:
+      APP_ENV: docker
+      APP_NAME: aml-pipeline
+      DATA_RAW_DIR: data/raw
+      DATA_PROCESSED_DIR: data/processed
+      DATA_REFERENCE_DIR: data/reference
+      ARTIFACTS_DIR: artifacts
+      BASE_DATASET_PATH: data/raw/Base.csv
+      DRIFT_DATASET_PATH_1: data/raw/Variant I.csv
+      DRIFT_DATASET_PATH_2: data/raw/Variant II.csv
+      TARGET_COLUMN: fraud_bool
+      RANDOM_SEED: 42
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+      DASHBOARD_API_URL: http://api:8000
+      PYTHONPATH: /app
+    ports:
+      - "8501:8501"
+    depends_on:
+      - api
+
+  airflow-init:
+    build:
+      context: .
+      dockerfile: Dockerfile.airflow
+    container_name: aml_airflow_init
+    user: "${AIRFLOW_UID}:0"
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://aml_user:aml_password@postgres:5432/airflow
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW_HOME: /opt/airflow
+      PYTHONPATH: /opt/project
+      APP_ENV: docker
+      APP_NAME: aml-pipeline
+      DATA_RAW_DIR: data/raw
+      DATA_PROCESSED_DIR: data/processed
+      DATA_REFERENCE_DIR: data/reference
+      ARTIFACTS_DIR: artifacts
+      BASE_DATASET_PATH: data/raw/Base.csv
+      DRIFT_DATASET_PATH_1: data/raw/Variant I.csv
+      DRIFT_DATASET_PATH_2: data/raw/Variant II.csv
+      TARGET_COLUMN: fraud_bool
+      RANDOM_SEED: 42
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+      MLFLOW_EXPERIMENT_NAME: aml_detection
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./logs:/opt/airflow/logs
+      - ./src:/opt/project/src
+      - ./config:/opt/project/config
+      - ./scripts:/opt/project/scripts
+      - ./data:/opt/project/data
+      - ./artifacts:/opt/project/artifacts
+      - ./.env:/opt/project/.env
+    command: >
+      bash -lc 'airflow db migrate &&
+      airflow users create --username admin --password admin --firstname admin --lastname admin --role Admin --email admin@example.com || true'
+    depends_on:
+      - postgres
+      - mlflow
+
+  airflow-webserver:
+    build:
+      context: .
+      dockerfile: Dockerfile.airflow
+    container_name: aml_airflow_webserver
+    user: "${AIRFLOW_UID}:0"
+    restart: unless-stopped
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://aml_user:aml_password@postgres:5432/airflow
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__WEBSERVER__SECRET_KEY: aml_secret_key
+      AIRFLOW_HOME: /opt/airflow
+      PYTHONPATH: /opt/project
+      APP_ENV: docker
+      APP_NAME: aml-pipeline
+      DATA_RAW_DIR: data/raw
+      DATA_PROCESSED_DIR: data/processed
+      DATA_REFERENCE_DIR: data/reference
+      ARTIFACTS_DIR: artifacts
+      BASE_DATASET_PATH: data/raw/Base.csv
+      DRIFT_DATASET_PATH_1: data/raw/Variant I.csv
+      DRIFT_DATASET_PATH_2: data/raw/Variant II.csv
+      TARGET_COLUMN: fraud_bool
+      RANDOM_SEED: 42
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+      MLFLOW_EXPERIMENT_NAME: aml_detection
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./logs:/opt/airflow/logs
+      - ./src:/opt/project/src
+      - ./config:/opt/project/config
+      - ./scripts:/opt/project/scripts
+      - ./data:/opt/project/data
+      - ./artifacts:/opt/project/artifacts
+      - ./.env:/opt/project/.env
+    command: airflow webserver
+    ports:
+      - "8080:8080"
+    depends_on:
+      - airflow-init
+
+  airflow-scheduler:
+    build:
+      context: .
+      dockerfile: Dockerfile.airflow
+    container_name: aml_airflow_scheduler
+    user: "${AIRFLOW_UID}:0"
+    restart: unless-stopped
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://aml_user:aml_password@postgres:5432/airflow
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW_HOME: /opt/airflow
+      PYTHONPATH: /opt/project
+      APP_ENV: docker
+      APP_NAME: aml-pipeline
+      DATA_RAW_DIR: data/raw
+      DATA_PROCESSED_DIR: data/processed
+      DATA_REFERENCE_DIR: data/reference
+      ARTIFACTS_DIR: artifacts
+      BASE_DATASET_PATH: data/raw/Base.csv
+      DRIFT_DATASET_PATH_1: data/raw/Variant I.csv
+      DRIFT_DATASET_PATH_2: data/raw/Variant II.csv
+      TARGET_COLUMN: fraud_bool
+      RANDOM_SEED: 42
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+      MLFLOW_EXPERIMENT_NAME: aml_detection
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./logs:/opt/airflow/logs
+      - ./src:/opt/project/src
+      - ./config:/opt/project/config
+      - ./scripts:/opt/project/scripts
+      - ./data:/opt/project/data
+      - ./artifacts:/opt/project/artifacts
+      - ./.env:/opt/project/.env
+    command: airflow scheduler
+    depends_on:
+      - airflow-init
+
+volumes:
+  postgres_data:
+  minio_data:
+
+----- END FILE: ./docker-compose.yml -----
+
+----- FILE: ./Dockerfile -----
+FROM python:3.10-slim
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements-dev.txt /app/requirements-dev.txt
+
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel \
+    && pip install --no-cache-dir -r requirements-dev.txt
+
+COPY . /app
+
+ENV PYTHONPATH=/app
+
+CMD ["python", "scripts/run_train.py"]
+
+----- END FILE: ./Dockerfile -----
+
+----- FILE: ./.dockerignore -----
+.git
+.gitignore
+.venv
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+
+mlruns
+artifacts
+data/raw
+data/processed
+data/reference
+
+notebooks
+.ipynb_checkpoints
+
+.vscode
+.idea
+.DS_Store
+
+.assets
+
+*.joblib
+*.parquet
+*.html
+
+----- END FILE: ./.dockerignore -----
+
+----- FILE: ./docker/postgres/init/init-multiple-dbs.sql -----
+CREATE DATABASE airflow;
+CREATE DATABASE mlflow;
+
+----- END FILE: ./docker/postgres/init/init-multiple-dbs.sql -----
+
+----- FILE: ./docs/setup.md -----
+# SETUP
+
+Подробная инструкция по запуску проекта `AML Pipeline` локально и в Docker.
+
+## 1. Что нужно перед стартом
+
+Для локального запуска:
+
+- Python 3.10+;
+- pip;
+- virtual environment `venv` или `.venv`.
+
+Для контейнерного запуска:
+
+- Docker;
+- Docker Compose.
+
+Также нужно положить исходные датасеты в папку:
+
+- `data/raw/Base.csv`
+- `data/raw/Variant I.csv`
+- `data/raw/Variant II.csv`
+
+Целевая колонка:
+
+- `fraud_bool`
+
+---
+
+## 2. Локальный запуск через virtual environment
+
+### 2.1 Создание окружения
+
+Linux / macOS:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+Windows PowerShell:
+
+```powershell
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+```
+
+Проверка:
+
+```bash
+which python
+python --version
+pip --version
+```
+
+---
+
+### 2.2 Установка зависимостей
+
+```bash
+python -m pip install --upgrade pip setuptools wheel
+pip install -r requirements.txt
+```
+
+---
+
+### 2.3 Проверка данных
+
+Убедитесь, что файлы реально лежат в `data/raw`:
+
+```bash
+ls -lah data/raw
+```
+
+---
+
+### 2.4 Порядок запуска пайплайна локально
+
+Проверка данных:
+
+```bash
+python scripts/run_data_check.py
+```
+
+Feature engineering:
+
+```bash
+python scripts/run_feature_engineering.py
+```
+
+Обучение:
+
+```bash
+python scripts/run_train.py
+```
+
+Проверка дрейфа:
+
+```bash
+python scripts/run_drift_check.py
+```
+
+SHAP explainability:
+
+```bash
+python scripts/run_explain.py
+```
+
+Benchmark:
+
+```bash
+python scripts/run_benchmark.py
+```
+
+---
+
+### 2.5 Запуск API
+
+```bash
+python scripts/run_api.py
+```
+
+После запуска API будет доступен по адресу:
+
+- `http://localhost:8000`
+- `http://localhost:8000/docs`
+
+Основные endpoints:
+
+- `/health`
+- `/ready`
+- `/predict`
+- `/predict_batch`
+
+---
+
+### 2.6 Запуск dashboard
+
+В отдельном терминале с тем же активированным окружением:
+
+```bash
+python scripts/run_dashboard.py
+```
+
+После запуска dashboard будет доступен по адресу:
+
+- `http://localhost:8501`
+
+---
+
+### 2.7 Тесты
+
+```bash
+pytest -q
+```
+
+---
+
+### 2.8 Завершение работы с окружением
+
+```bash
+deactivate
+```
+
+Если нужно удалить окружение:
+
+Linux / macOS:
+
+```bash
+rm -rf .venv
+```
+
+Windows PowerShell:
+
+```powershell
+Remove-Item -Recurse -Force .venv
+```
+
+---
+
+## 3. Запуск через Docker Compose
+
+Этот режим нужен для полного MLOps-контура: PostgreSQL, MLflow, Airflow, API, dashboard и других сервисов.
+
+---
+
+### 3.1 Проверка Docker
+
+```bash
+docker --version
+docker-compose --version
+```
+
+---
+
+### 3.2 Инициализация PostgreSQL
+
+Если используется init-скрипт для создания отдельных БД, он должен лежать в директории, которая монтируется в контейнер PostgreSQL, например:
+
+- `docker/postgres/init/init-multiple-dbs.sql`
+
+Пример содержимого:
+
+```sql
+CREATE DATABASE airflow;
+CREATE DATABASE mlflow;
+```
+
+Важно: скрипты из `/docker-entrypoint-initdb.d` выполняются только при **первом создании volume** PostgreSQL.
+
+---
+
+### 3.3 Чистый запуск с нуля
+
+Если нужно развернуть всё заново и применить init-скрипты:
+
+```bash
+docker-compose down -v
+docker-compose up -d postgres
+```
+
+Проверить список баз:
+
+```bash
+docker-compose exec postgres psql -U aml_user -d postgres -c "\l"
+```
+
+Ожидаются базы:
+
+- `postgres`
+- `airflow`
+- `mlflow`
+
+---
+
+### 3.4 Запуск MLflow
+
+```bash
+docker-compose up -d mlflow
+docker-compose logs -f mlflow
+```
+
+Проверка, что MLflow отвечает:
+
+```bash
+docker-compose exec mlflow python -c "import urllib.request; print(urllib.request.urlopen('http://localhost:5000').status)"
+```
+
+Ожидаемый результат:
+
+- `200`
+
+Если есть контейнер `airflow-webserver`, можно проверить так:
+
+```bash
+docker-compose exec airflow-webserver python -c "import requests; print(requests.get('http://mlflow:5000', timeout=5).status_code)"
+```
+
+---
+
+### 3.5 Запуск Airflow
+
+### Важно: ``AIRFLOW_UID``
+
+Airflow в Docker работает с локально примонтированными директориями проекта, поэтому ему нужен корректный ``AIRFLOW_UID``.
+
+В файле ``.env`` должно быть указано, например:
+
+```env
+AIRFLOW_UID=1000
+```
+
+Проверить свой UID можно так:
+
+```bash
+id -u
+```
+
+Если команда возвращает не ``1000``, замени значение ``AIRFLOW_UID`` в ``.env`` на своё.
+
+Это нужно для того, чтобы:
+
+- контейнеры Airflow корректно запускались;
+- логи и артефакты создавались с ожидаемыми правами;
+- не возникали ошибки доступа к файлам на хосте;
+- не приходилось вручную исправлять владельца файлов через ``chown``.
+
+Если ``AIRFLOW_UID`` задан неверно или не задан вообще, возможны проблемы со стартом Airflow и ошибки прав доступа при записи в ``logs/`, ``data/processed/` и ``artifacts/`.
+
+Запуск:
+
+```bash
+docker-compose up -d airflow-init airflow-webserver airflow-scheduler
+```
+
+Проверить контейнеры:
+
+```bash
+docker-compose ps
+```
+
+Проверить DAG'и:
+
+```bash
+docker-compose exec airflow-webserver airflow dags list
+```
+
+Airflow UI:
+
+- `http://localhost:8080`
+
+Если в init-команде создаётся пользователь admin, вход обычно такой:
+
+- login: `admin`
+- password: `admin`
+
+---
+
+### 3.6 Запуск API и dashboard в Docker
+
+```bash
+docker-compose up -d api dashboard
+```
+
+Проверка:
+
+- API: `http://localhost:8000/docs`
+- Dashboard: `http://localhost:8501`
+
+---
+
+### 3.7 Полный запуск всех сервисов
+
+Если compose уже настроен корректно:
+
+```bash
+docker-compose up -d
+```
+
+Проверка статуса:
+
+```bash
+docker-compose ps
+```
+
+---
+
+## 4. Проверка работоспособности
+
+### 4.1 Проверка training pipeline внутри контейнера
+
+```bash
+docker-compose exec airflow-webserver python -u -c "from src.pipelines.training_pipeline import run_training_pipeline; print(run_training_pipeline('base'))"
+```
+
+Если всё хорошо, pipeline проходит без traceback и сохраняет артефакты.
+
+---
+
+### 4.2 Проверка Airflow
+
+Проверить DAG'и через CLI:
+
+```bash
+docker-compose exec airflow-webserver airflow dags list
+docker-compose exec airflow-webserver airflow tasks list aml_training_dag
+```
+
+Также можно открыть Airflow UI и запустить DAG вручную.
+
+---
+
+### 4.3 Проверка логов
+
+```bash
+docker-compose logs --tail=200 mlflow
+docker-compose logs --tail=200 airflow-webserver
+docker-compose logs --tail=200 airflow-scheduler
+docker-compose logs --tail=200 api
+docker-compose logs --tail=200 dashboard
+```
+
+Для непрерывного просмотра:
+
+```bash
+docker-compose logs -f mlflow
+```
+
+---
+
+## 5. Где искать результаты
+
+Основные артефакты сохраняются в:
+
+- `data/processed/`
+- `artifacts/reports/`
+- `artifacts/metrics/feature_spec.yaml`
+- `artifacts/metrics/training_summary.json`
+- `artifacts/models/`
+- `artifacts/shap/`
+- `artifacts/predictions/`
+
+---
+
+## 6. Как остановить проект
+
+Остановить контейнеры без удаления данных:
+
+```bash
+docker-compose stop
+```
+
+Остановить и удалить контейнеры:
+
+```bash
+docker-compose down
+```
+
+Полностью удалить контейнеры и volume'ы:
+
+```bash
+docker-compose down -v
+```
+
+---
+
+## 7. Как очистить проект
+
+Удалить артефакты:
+
+```bash
+rm -rf artifacts/*
+rm -rf data/processed/*
+```
+
+Если есть проблемы с правами:
+
+```bash
+sudo rm -rf artifacts
+mkdir -p artifacts/metrics artifacts/models artifacts/reports artifacts/data artifacts/predictions artifacts/shap
+```
+
+Полная очистка контейнерной инфраструктуры:
+
+```bash
+docker-compose down -v
+```
+
+После этого базы `airflow` и `mlflow` будут создаваться заново.
+
+---
+
+## 8. Частые проблемы
+
+### Проблема: database `mlflow` does not exist
+
+Проверить список баз:
+
+```bash
+docker-compose exec postgres psql -U aml_user -d postgres -c "\l"
+```
+
+Если базы нет, значит init-скрипт не выполнился, либо volume PostgreSQL уже существовал до добавления SQL-файла.
+
+Решение: сделать чистый сброс PostgreSQL через `docker-compose down -v` и поднять заново.
+
+---
+
+### Проблема: Airflow пишет `You need to upgrade the database`
+
+Причина: Airflow metadata DB не инициализирована или используется не та база.
+
+Нужно, чтобы Airflow использовал отдельную БД `airflow`, а MLflow — отдельную БД `mlflow`.
+
+После исправления конфигурации нужно поднять инфраструктуру заново.
+
+---
+
+### Проблема: `Permission denied` в `artifacts`
+
+Причина: часть файлов создана контейнером под другим пользователем.
+
+Быстрое решение:
+
+```bash
+sudo rm -rf artifacts
+mkdir -p artifacts/metrics artifacts/models artifacts/reports artifacts/data artifacts/predictions artifacts/shap
+```
+
+---
+
+### Проблема: MLflow долго стартует
+
+Если внутри контейнера каждый раз выполняется `pip install`, запуск может быть медленным.
+
+Это не критическая ошибка, но лучше вынести установку зависимостей в отдельный Dockerfile для сервиса MLflow.
+
+---
+
+## 9. Полезные команды
+
+Поднять один сервис:
+
+```bash
+docker-compose up -d mlflow
+```
+
+Пересоздать один сервис:
+
+```bash
+docker-compose up -d --force-recreate --no-deps mlflow
+```
+
+Зайти в контейнер:
+
+```bash
+docker-compose exec airflow-webserver bash
+docker-compose exec postgres psql -U aml_user -d postgres
+```
+
+---
+
+## 10. Рекомендуемый порядок действий
+
+Для локальной Python-отладки:
+
+1. data check;
+2. feature engineering;
+3. training;
+4. drift check;
+5. explainability;
+6. API;
+7. dashboard.
+
+Для полного Docker-запуска:
+
+1. `docker-compose down -v`
+2. `docker-compose up -d postgres`
+3. проверить, что есть базы `airflow` и `mlflow`
+4. `docker-compose up -d mlflow`
+5. проверить, что MLflow отдаёт `200`
+6. `docker-compose up -d airflow-init airflow-webserver airflow-scheduler`
+7. `docker-compose up -d api dashboard`
+
+----- END FILE: ./docs/setup.md -----
+
+----- FILE: ./dump/dump_project.sh -----
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="${1:-$HOME/HSE_AML_MLOps_pipeline}"
+OUTPUT_FILE="${2:-project_dump.txt}"
+MAX_TEXT_FILE_SIZE="${MAX_TEXT_FILE_SIZE:-524288}" # 512 KB
+
+if [[ ! -d "$ROOT_DIR" ]]; then
+  echo "Директория не найдена: $ROOT_DIR" >&2
+  exit 1
+fi
+
+should_skip_path() {
+  local path="$1"
+
+  case "$path" in
+    */.git/*|*/.idea/*|*/.vscode/*|*/.venv/*|*/venv/*|*/env/*|*/__pycache__/*|\
+*/node_modules/*|*/mlruns/*|*/logs/*|*/artifacts/*|*/postgres_data/*|*/minio_data/*|\
+*/.pytest_cache/*|*/.mypy_cache/*|*/.ruff_cache/*|*/.tox/*|*/.cache/*|\
+*/dist/*|*/build/*|*/site-packages/*|*/htmlcov/*|*/coverage/*|*/.eggs/*|*/.next/*)
+      return 0
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
+should_include_file() {
+  local file="$1"
+  local base lower
+
+  base="$(basename "$file")"
+  lower="$(printf '%s' "$base" | tr '[:upper:]' '[:lower:]')"
+
+  case "$lower" in
+    dockerfile|makefile|readme|readme.md|license|license.md|requirements.txt|\
+pyproject.toml|poetry.lock|pipfile|pipfile.lock|setup.py|setup.cfg|tox.ini|\
+.gitignore|.dockerignore|.env|.env.example|docker-compose.yml|docker-compose.yaml)
+      return 0
+      ;;
+  esac
+
+  case "$lower" in
+    *.py|*.sh|*.bash|*.zsh|*.md|*.txt|*.yml|*.yaml|*.json|*.toml|*.ini|*.cfg|*.conf|*.sql|*.xml)
+      return 0
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
+is_text_file() {
+  local file="$1"
+
+  if ! command -v file >/dev/null 2>&1; then
+    return 0
+  fi
+
+  if file --mime "$file" | grep -q 'charset=binary'; then
+    return 1
+  fi
+
+  return 0
+}
+
+get_file_size() {
+  local file="$1"
+
+  if stat -c%s "$file" >/dev/null 2>&1; then
+    stat -c%s "$file"
+    return 0
+  fi
+
+  if stat -f%z "$file" >/dev/null 2>&1; then
+    stat -f%z "$file"
+    return 0
+  fi
+
+  wc -c < "$file"
+}
+
+contains_embedded_binary_blob() {
+  local file="$1"
+
+  if grep -qE 'data:(font|image|application)/[^;]+;base64,' "$file" 2>/dev/null; then
+    return 0
+  fi
+
+  if awk 'length($0) > 5000 { found=1; exit } END { exit !found }' "$file" 2>/dev/null; then
+    return 0
+  fi
+
+  return 1
+}
+
+relative_path() {
+  local file="$1"
+
+  if command -v realpath >/dev/null 2>&1; then
+    realpath --relative-to="$ROOT_DIR" "$file" 2>/dev/null && return 0
+  fi
+
+  python3 - "$ROOT_DIR" "$file" <<'PY'
+import os
+import sys
+print(os.path.relpath(sys.argv[2], sys.argv[1]))
+PY
+}
+
+{
+  echo "PROJECT ROOT: $ROOT_DIR"
+  echo "GENERATED AT: $(date '+%Y-%m-%d %H:%M:%S')"
+  echo "MAX TEXT FILE SIZE: $MAX_TEXT_FILE_SIZE bytes"
+  echo
+
+  echo "===================="
+  echo "DIRECTORY STRUCTURE"
+  echo "===================="
+  echo
+
+  find "$ROOT_DIR" \
+    \( -path "*/.git" -o -path "*/.idea" -o -path "*/.vscode" -o -path "*/.venv" -o -path "*/venv" -o -path "*/env" -o \
+       -path "*/__pycache__" -o -path "*/node_modules" -o -path "*/mlruns" -o -path "*/logs" -o -path "*/artifacts" -o \
+       -path "*/postgres_data" -o -path "*/minio_data" -o -path "*/.pytest_cache" -o -path "*/.mypy_cache" -o \
+       -path "*/.ruff_cache" -o -path "*/.tox" -o -path "*/.cache" -o -path "*/dist" -o -path "*/build" -o \
+       -path "*/site-packages" -o -path "*/htmlcov" -o -path "*/coverage" -o -path "*/.eggs" -o -path "*/.next" \) -prune \
+    -o -print | sed "s|$ROOT_DIR|.|" | sort
+
+  echo
+  echo "================="
+  echo "FILES CONTENT"
+  echo "================="
+  echo
+
+  while IFS= read -r file; do
+    if should_skip_path "$file"; then
+      continue
+    fi
+
+    if [[ ! -f "$file" ]]; then
+      continue
+    fi
+
+    if ! should_include_file "$file"; then
+      continue
+    fi
+
+    if ! is_text_file "$file"; then
+      continue
+    fi
+
+    if [[ "$(get_file_size "$file")" -gt "$MAX_TEXT_FILE_SIZE" ]]; then
+      continue
+    fi
+
+    if contains_embedded_binary_blob "$file"; then
+      continue
+    fi
+
+    rel_path="$(relative_path "$file")"
+
+    echo "----- FILE: ./$rel_path -----"
+    cat "$file"
+    echo
+    echo "----- END FILE: ./$rel_path -----"
+    echo
+  done < <(
+    find "$ROOT_DIR" \
+      \( -path "*/.git" -o -path "*/.idea" -o -path "*/.vscode" -o -path "*/.venv" -o -path "*/venv" -o -path "*/env" -o \
+         -path "*/__pycache__" -o -path "*/node_modules" -o -path "*/mlruns" -o -path "*/logs" -o -path "*/artifacts" -o \
+         -path "*/postgres_data" -o -path "*/minio_data" -o -path "*/.pytest_cache" -o -path "*/.mypy_cache" -o \
+         -path "*/.ruff_cache" -o -path "*/.tox" -o -path "*/.cache" -o -path "*/dist" -o -path "*/build" -o \
+         -path "*/site-packages" -o -path "*/htmlcov" -o -path "*/coverage" -o -path "*/.eggs" -o -path "*/.next" \) -prune \
+      -o -type f -print | sort
+  )
+
+} > "$OUTPUT_FILE"
+
+echo "Готово: $OUTPUT_FILE"
+
+----- END FILE: ./dump/dump_project.sh -----
+
+----- FILE: ./dump/project_dump.txt -----
+
+----- END FILE: ./dump/project_dump.txt -----
+
+----- FILE: ./.env -----
+APP_ENV=docker
+MLFLOW_TRACKING_URI=http://mlflow:5000
+API_HOST=0.0.0.0
+API_PORT=8000
+DASHBOARD_API_URL=http://api:8000
+AIRFLOW_UID=1000
+
+----- END FILE: ./.env -----
+
+----- FILE: ./.env.example -----
+APP_ENV=local
+APP_NAME=aml-pipeline
+
+DATA_RAW_DIR=data/raw
+DATA_PROCESSED_DIR=data/processed
+DATA_REFERENCE_DIR=data/reference
+ARTIFACTS_DIR=artifacts
+
+BASE_DATASET_PATH=data/raw/Base.csv
+DRIFT_DATASET_PATH_1=data/raw/Variant I.csv
+DRIFT_DATASET_PATH_2=data/raw/Variant II.csv
+
+TARGET_COLUMN=fraud_bool
+RANDOM_SEED=42
+
+MLFLOW_TRACKING_URI=file:./mlruns
+MLFLOW_EXPERIMENT_NAME=aml_detection
+
+POSTGRES_HOST=postgres
+POSTGRES_PORT=5432
+POSTGRES_USER=aml_user
+POSTGRES_PASSWORD=aml_password
+POSTGRES_DB=postgres
+MLFLOW_TRACKING_URI=http://mlflow:5000
+
+MINIO_ENDPOINT=minio:9000
+MINIO_ACCESS_KEY=minioadmin
+MINIO_SECRET_KEY=minioadmin
+MINIO_BUCKET=mlflow
+
+API_HOST=0.0.0.0
+API_PORT=8000
+DASHBOARD_API_URL=http://localhost:8000
+
+----- END FILE: ./.env.example -----
+
+----- FILE: ./.gitignore -----
+# Все артефакты
+/artifacts/metrics/
+/artifacts/models/
+/artifacts/predictions/
+/artifacts/reports/
+/artifacts/shap/
+
+# Логи прогонов
+/mlruns/
+/logs/
+
+# Данные
+/data/raw/
+/data/processed/
+/data/reference/
+
+# Окружение
+.venv/
+.env
+.env.docker.local
+
+# Скомпилированное
+__pycache__/
+*.pyc
+*.pyo   
+*.pyd
+
+# Notebook checkpoints
+.ipynb_checkpoints/
+
+# Прочее
+/dump/
+/docs/
+*.bak
+
+----- END FILE: ./.gitignore -----
+
+----- FILE: ./LICENSE -----
+MIT License
+
+Copyright (c) 2026 Max Kotsyuba
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+----- END FILE: ./LICENSE -----
+
+----- FILE: ./Makefile -----
+.PHONY: install test data-check features train drift explain api dashboard promote benchmark
+
+install:
+	pip install -r requirements.txt
+
+test:
+	pytest -q
+
+data-check:
+	python scripts/run_data_check.py
+
+features:
+	python scripts/run_feature_engineering.py
+
+train:
+	python scripts/run_train.py
+
+drift:
+	python scripts/run_drift_check.py
+
+explain:
+	python scripts/run_explain.py
+
+api:
+	python scripts/run_api.py
+
+dashboard:
+	python scripts/run_dashboard.py
+
+promote:
+	python scripts/promote_model.py
+
+benchmark:
+	python scripts/run_benchmark.py
+
+----- END FILE: ./Makefile -----
+
+----- FILE: ./project_dump.txt -----

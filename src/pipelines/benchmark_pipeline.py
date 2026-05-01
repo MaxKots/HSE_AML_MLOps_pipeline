@@ -5,6 +5,9 @@ from typing import Any
 
 import pandas as pd
 
+# Дернуть подготовку synthaml
+from src.data.synthaml import prepare_synthaml_dataset_from_frames
+
 from src.data import DataLoader
 from src.models.benchmark import AMLBenchmarkRunner
 from src.utils.io import save_dataframe, save_json
@@ -23,6 +26,9 @@ def run_benchmark_pipeline() -> dict[str, Any]:
     base_df = loader.load_dataset("base")
     variant_1_df = loader.load_dataset("variant_1")
     variant_2_df = loader.load_dataset("variant_2")
+    alerts_df = loader.load_dataset("synthaml_alerts")
+    transactions_df = loader.load_dataset("synthaml_transactions")
+    synthaml_df = prepare_synthaml_dataset_from_frames(alerts_df, transactions_df)
 
     results = []
 
@@ -92,6 +98,17 @@ def run_benchmark_pipeline() -> dict[str, Any]:
 
     for config in experiments:
         result = runner.run_single_experiment(**config)
+        results.append(asdict(result))
+
+    for model_type in ["lightgbm", "xgboost"]:
+        result = runner.run_prepared_experiment(
+            experiment_name=f"synthaml_{model_type}",
+            train_df=synthaml_df,
+            test_df=None,
+            model_type=model_type,
+            target_column="fraud_bool",
+            categorical_columns=[],
+        )
         results.append(asdict(result))
 
     results_df = pd.DataFrame(results)

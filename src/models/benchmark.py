@@ -113,6 +113,7 @@ class AMLBenchmarkRunner:
 
         return results
 
+    # Это для Fraud датафреймов
     def run_single_experiment(
         self,
         experiment_name: str,
@@ -209,6 +210,102 @@ class AMLBenchmarkRunner:
             f"roc_auc={result.roc_auc:.4f}, "
             f"pr_auc={result.pr_auc:.4f}, "
             f"precision@100={result.precision_at_100:.4f}"
+        )
+
+        return result
+
+    # Это для synthAML датафрейма
+    def run_prepared_experiment(
+        self,
+        experiment_name: str,
+        train_df: pd.DataFrame,
+        test_df: pd.DataFrame | None = None,
+        model_type: str = "lightgbm",
+        target_column: str = "fraud_bool",
+        categorical_columns: list[str] | None = None,
+    ) -> BenchmarkResult:
+        categorical_columns = categorical_columns or []
+
+        prepared_train_df = train_df.copy()
+        numerical_columns = [
+            col for col in prepared_train_df.columns
+            if col not in categorical_columns + [target_column]
+        ]
+
+        start_train = perf_counter()
+        training_result = self.trainer.train(
+            df=prepared_train_df,
+            categorical_columns=categorical_columns,
+            numerical_columns=numerical_columns,
+            model_type=model_type,
+        )
+        train_time_sec = perf_counter() - start_train
+
+        if test_df is None:
+            metrics = training_result.metrics_test
+            test_rows = int(len(prepared_train_df) * 0.15)
+            inference_time_sec = 0.0
+            business_metrics = {
+                "alert_rate": 0.0,
+                "false_positive_rate": metrics["false_positive_rate"],
+                "precision_at_100": 0.0,
+                "precision_at_500": 0.0,
+                "recall_at_100": 0.0,
+                "recall_at_500": 0.0,
+            }
+        else:
+            from src.models.predict import AMLPredictor
+
+            predictor = AMLPredictor(training_result.bundle_path)
+
+            prepared_test_df = test_df.copy()
+
+            start_inference = perf_counter()
+            prediction_df = predictor.predict_proba(prepared_test_df)
+            inference_time_sec = perf_counter() - start_inference
+
+            y_true = prepared_test_df[target_column].values
+            y_proba = prediction_df["prediction_score"].values
+
+            metrics = calculate_classification_metrics(
+                y_true=y_true,
+                y_proba=y_proba,
+                threshold=0.5,
+            )
+
+            business_metrics = self._calculate_business_metrics(
+                y_true=y_true,
+                y_proba=y_proba,
+                threshold=0.5,
+                top_k_values=(100, 500),
+            )
+
+            test_rows = len(prepared_test_df)
+
+        result = BenchmarkResult(
+            experiment_name=experiment_name,
+            model_type=model_type,
+            use_feature_engineering=False,
+            train_rows=len(prepared_train_df),
+            test_rows=test_rows,
+            roc_auc=metrics["roc_auc"],
+            pr_auc=metrics["pr_auc"],
+            precision=metrics["precision"],
+            recall=metrics["recall"],
+            f1_score=metrics["f1_score"],
+            false_positive_rate=business_metrics["false_positive_rate"],
+            alert_rate=business_metrics["alert_rate"],
+            precision_at_100=business_metrics["precision_at_100"],
+            precision_at_500=business_metrics["precision_at_500"],
+            recall_at_100=business_metrics["recall_at_100"],
+            recall_at_500=business_metrics["recall_at_500"],
+            train_time_sec=train_time_sec,
+            inference_time_sec=inference_time_sec,
+        )
+
+        logger.info(
+            f"Подготовленный эксперимент '{experiment_name}' завершён: "
+            f"model={model_type}, roc_auc={result.roc_auc:.4f}, pr_auc={result.pr_auc:.4f}"
         )
 
         return result

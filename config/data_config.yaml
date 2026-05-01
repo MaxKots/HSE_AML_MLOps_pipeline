@@ -18,3 +18,5 @@ sources:
   base_dataset_path: data/raw/Base.csv
   drift_dataset_path_1: data/raw/Variant I.csv
   drift_dataset_path_2: data/raw/Variant II.csv
+  synthaml_alerts_path: data/raw/synthaml_alerts.csv
+  synthaml_transactions_path: data/raw/synthaml_transactions.csv
