@@ -30,17 +30,21 @@ services:
   mlflow:
     image: python:3.10-slim
     container_name: aml_mlflow
-    # user: "${UID}:${GID}"
     working_dir: /app
     restart: unless-stopped
     volumes:
       - ./:/app
+      - ./mlruns:/mlruns
+    environment:
+      GIT_PYTHON_REFRESH: quiet
     command: >
       bash -lc 'pip install mlflow==2.17.0 boto3 psycopg2-binary &&
       python -c "import socket,time; [socket.create_connection((\"postgres\",5432),2).close() or exit() for _ in range(60) if not time.sleep(2)]" &&
+      mkdir -p /mlruns &&
       mlflow server
       --backend-store-uri postgresql://aml_user:aml_password@postgres:5432/mlflow
-      --default-artifact-root ./mlruns
+      --artifacts-destination /mlruns
+      --serve-artifacts
       --host 0.0.0.0
       --port 5000'
     ports:

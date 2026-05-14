@@ -177,6 +177,66 @@ Airflow используется для запуска и мониторинга
 
 ![airflow](https://github.com/MaxKots/HSE_AML_MLOps_pipeline/blob/main/.assets/2.jpg)
 
+## Benchmark DAG в Airflow
+
+Для воспроизводимого запуска экспериментальных сценариев в проекте предусмотрен отдельный benchmark DAG:
+
+- файл: `dags/aml_benchmark_dag.py`
+- назначение: автоматический запуск серии benchmark-экспериментов и сбор итоговых таблиц для анализа результатов
+
+### Что делает benchmark DAG
+
+DAG последовательно запускает набор сценариев сравнения моделей на разных экспериментальных средах.
+
+Типовые конфигурации включают:
+
+- **Base**
+  - LightGBM, исходные признаки
+  - XGBoost, исходные признаки
+  - LightGBM, расширенные признаки
+  - XGBoost, расширенные признаки
+
+- **Variant I**
+  - LightGBM, расширенные признаки
+  - XGBoost, расширенные признаки
+
+- **Variant II**
+  - LightGBM, расширенные признаки
+  - XGBoost, расширенные признаки
+
+После завершения отдельных benchmark-задач DAG запускает финальный шаг постобработки, который формирует сводные таблицы с метриками по сценариям.
+
+### Зачем нужен отдельный DAG
+
+Использование benchmark DAG позволяет:
+
+- запускать все сценарии из единой точки;
+- обеспечивать воспроизводимость экспериментальной постановки;
+- получать согласованные CSV-артефакты для главы с экспериментальной оценкой;
+- не выполнять каждый benchmark вручную отдельной командой.
+
+### Как запустить benchmark DAG
+
+После старта контейнеров Airflow:
+
+```bash
+docker-compose up -d airflow-webserver airflow-scheduler
+```
+можно проверить наличие DAG:
+```bash
+docker-compose exec airflow-webserver airflow dags list | grep benchmark
+```
+
+Далее benchmark DAG можно запустить:
+```bash
+docker-compose exec airflow-webserver airflow dags trigger aml_benchmark_dag
+```
+или через Airflow UI:
+```
+http://localhost:8080
+```
+
+
 ## Эксперименты в MLflow
 
 MLflow используется для логирования запусков, параметров, метрик и артефактов моделей.
@@ -226,6 +286,51 @@ python scripts/run_dashboard.py
 ```bash
 docker-compose exec airflow-webserver airflow dags list
 ```
+
+## SHAP-отчёты
+
+Запускать из корня проекта:
+
+```bash
+cd /home/max/HSE_AML_MLOps_pipeline
+source .venv/bin/activate
+python -m pip install -r requirements-dev.txt
+```
+
+Variant II:
+
+```bash
+PYTHONPATH=. python scripts/run_shap_variant_2.py
+```
+
+SynthAML:
+
+```bash
+PYTHONPATH=. python scripts/run_shap_synthaml.py
+```
+
+Только одна модель:
+
+```bash
+PYTHONPATH=. MODEL_TYPES=lightgbm python scripts/run_shap_synthaml.py
+PYTHONPATH=. MODEL_TYPES=xgboost python scripts/run_shap_synthaml.py
+```
+
+Настройка выборки и числа признаков:
+
+```bash
+PYTHONPATH=. TOP_N_FOR_SHAP=500 TOP_FEATURES=15 python scripts/run_shap_synthaml.py
+```
+
+Результаты сохраняются в:
+
+```text
+artifacts/shap/
+```
+
+Пример отчета:
+![shap](https://github.com/MaxKots/HSE_AML_MLOps_pipeline/blob/main/.assets/shap_example.png)
+
 
 ## Полезные ссылки
 

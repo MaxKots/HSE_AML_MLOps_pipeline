@@ -6,6 +6,7 @@ from typing import Any
 
 import lightgbm as lgb
 import mlflow
+import numpy as np
 import pandas as pd
 import xgboost as xgb
 from sklearn.compose import ColumnTransformer
@@ -115,12 +116,40 @@ class AMLModelTrainer:
         )
         return preprocessor
 
-    def _build_model(self, model_type: str):
+    def _calculate_scale_pos_weight(self, y_train: np.ndarray) -> float:
+        y_train = np.asarray(y_train)
+
+        positives = float(np.sum(y_train == 1))
+        negatives = float(np.sum(y_train == 0))
+
+        if positives == 0:
+            return 1.0
+
+        return negatives / positives
+
+    def _build_model(
+        self,
+        model_type: str,
+        y_train: np.ndarray | None = None,
+    ):
         if model_type == "lightgbm":
             return lgb.LGBMClassifier(**self.lightgbm_config)
 
         if model_type == "xgboost":
-            return xgb.XGBClassifier(**self.xgboost_config)
+            model_params = self.xgboost_config.copy()
+
+            if y_train is not None:
+                scale_pos_weight = self._calculate_scale_pos_weight(y_train)
+                model_params["scale_pos_weight"] = scale_pos_weight
+
+                logger.info(
+                    "XGBoost scale_pos_weight рассчитан автоматически: "
+                    f"{scale_pos_weight:.4f}"
+                )
+
+            model_params["eval_metric"] = "aucpr"
+
+            return xgb.XGBClassifier(**model_params)
 
         raise ValueError(f"Неподдерживаемый тип модели: {model_type}")
 
@@ -167,7 +196,11 @@ class AMLModelTrainer:
 
         feature_names_after_preprocessing = self._extract_feature_names(preprocessor)
 
-        model = self._build_model(model_type)
+        model = self._build_model(
+            model_type=model_type,
+            y_train=y_train,
+        )
+
         threshold = float(self.training_config["threshold"])
 
         with mlflow.start_run(run_name=f"{model_type}_training") as run:
@@ -187,7 +220,14 @@ class AMLModelTrainer:
             if model_type == "lightgbm":
                 mlflow.log_params(self.lightgbm_config)
             elif model_type == "xgboost":
-                mlflow.log_params(self.xgboost_config)
+                xgb_params = model.get_params()
+                mlflow.log_params(
+                    {
+                        f"xgboost_{key}": value
+                        for key, value in xgb_params.items()
+                        if isinstance(value, (str, int, float, bool))
+                    }
+                )
 
             logger.info(f"Обучение модели типа '{model_type}'")
             model.fit(X_train_prepared, y_train)
@@ -233,7 +273,9 @@ class AMLModelTrainer:
             logger.info(
                 f"Обучение модели '{model_type}' завершено. "
                 f"valid_roc_auc={metrics_valid['roc_auc']:.4f}, "
-                f"test_roc_auc={metrics_test['roc_auc']:.4f}"
+                f"valid_pr_auc={metrics_valid['pr_auc']:.4f}, "
+                f"test_roc_auc={metrics_test['roc_auc']:.4f}, "
+                f"test_pr_auc={metrics_test['pr_auc']:.4f}"
             )
 
             return TrainingResult(

@@ -444,8 +444,16 @@ def prepare_synthaml_dataset_from_frames(
         if column != "fraud_bool":
             result[column] = result[column].fillna(0)
 
-    # Удаляем возможные дубликаты и проверяем порядок колонок
+    # Удалить возможные дубликаты по техническому идентификатору алерта
     result = result.drop_duplicates(subset=["AlertID"]).reset_index(drop=True)
+
+    # Технические идентификаторы используются для объединения и агрегации,
+    # но не должны попадать в признаковое пространство модели
+    technical_columns = [
+        "AlertID",
+    ]
+
+    result = result.drop(columns=technical_columns, errors="ignore")
 
     logger.info(
         f"SynthAML подготовлен: rows={len(result)}, cols={len(result.columns)}"
