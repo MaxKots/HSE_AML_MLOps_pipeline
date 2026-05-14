@@ -22,8 +22,15 @@ class Settings(BaseSettings):
     base_dataset_path: str = Field(default="data/raw/Base.csv", alias="BASE_DATASET_PATH")
     drift_dataset_path_1: str = Field(default="data/raw/Variant I.csv", alias="DRIFT_DATASET_PATH_1")
     drift_dataset_path_2: str = Field(default="data/raw/Variant II.csv", alias="DRIFT_DATASET_PATH_2")
+
+    # Старые SynthAML-пути оставлены для обратной совместимости.
     synthaml_alerts_path: str = Field(default="data/raw/synthaml_alerts.csv", alias="SYNTHAML_ALERTS_PATH")
     synthaml_transactions_path: str = Field(default="data/raw/synthaml_transactions.csv", alias="SYNTHAML_TRANSACTIONS_PATH")
+
+    # SAML-D: Kaggle synthetic transaction monitoring dataset.
+    samld_dataset_path: str = Field(default="data/raw/SAML-D.csv", alias="SAMLD_DATASET_PATH")
+    # 0 означает использовать весь файл. Для быстрой апробации можно задать, например, 500000.
+    samld_max_rows: int = Field(default=0, alias="SAMLD_MAX_ROWS")
 
     target_column: str = Field(default="fraud_bool", alias="TARGET_COLUMN")
     random_seed: int = Field(default=42, alias="RANDOM_SEED")
@@ -45,8 +52,6 @@ class Settings(BaseSettings):
     api_host: str = Field(default="0.0.0.0", alias="API_HOST")
     api_port: int = Field(default=8000, alias="API_PORT")
     dashboard_api_url: str = Field(default="http://localhost:8000", alias="DASHBOARD_API_URL")
-
-
 
     @property
     def project_root(self) -> Path:
@@ -71,6 +76,10 @@ class Settings(BaseSettings):
     @property
     def synthaml_transactions(self) -> Path:
         return self.project_root / self.synthaml_transactions_path
+
+    @property
+    def samld_dataset(self) -> Path:
+        return self.project_root / self.samld_dataset_path
 
 
 settings = Settings()

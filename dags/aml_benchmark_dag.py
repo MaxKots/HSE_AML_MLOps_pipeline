@@ -15,14 +15,16 @@ from airflow.operators.empty import EmptyOperator
 
 from config.settings import settings
 from src.data import DataLoader, DataTransformer, DataValidator
-from src.data.synthaml import prepare_synthaml_dataset_from_frames
+from src.data.samld import (
+    get_samld_feature_columns,
+    prepare_samld_dataset_from_frame,
+)
 from src.features import FeatureEngineer
 from src.models.evaluate import calculate_classification_metrics
 from src.models.predict import AMLPredictor
 from src.models.train import AMLModelTrainer
 from src.utils.logger import get_logger
 from src.utils.paths import ensure_directories
-
 
 logger = get_logger(__name__)
 
@@ -44,7 +46,6 @@ BENCHMARK_MLFLOW_TRACKING_URI = os.getenv(
     "BENCHMARK_MLFLOW_TRACKING_URI",
     "file:/opt/project/artifacts/mlruns",
 )
-
 
 BENCHMARK_JOBS: list[dict[str, Any]] = [
     {
@@ -96,28 +97,28 @@ BENCHMARK_JOBS: list[dict[str, Any]] = [
         "output_file": "base_xgboost_engineered.csv",
     },
     {
-        "job_id": "synthaml_lightgbm_prepared",
-        "scenario": "SynthAML",
-        "dataset": "SynthAML",
-        "train_dataset_name": "synthaml",
-        "eval_dataset_name": "synthaml",
+        "job_id": "samld_lightgbm_engineered",
+        "scenario": "SAML-D",
+        "dataset": "SAML-D",
+        "train_dataset_name": "samld",
+        "eval_dataset_name": "samld",
         "evaluation_mode": "held_out_test",
         "model_type": "lightgbm",
-        "feature_set": "prepared",
+        "feature_set": "engineered",
         "threshold": DEFAULT_THRESHOLD,
-        "output_file": "synthaml_lightgbm_prepared.csv",
+        "output_file": "samld_lightgbm_engineered.csv",
     },
     {
-        "job_id": "synthaml_xgboost_prepared",
-        "scenario": "SynthAML",
-        "dataset": "SynthAML",
-        "train_dataset_name": "synthaml",
-        "eval_dataset_name": "synthaml",
+        "job_id": "samld_xgboost_engineered",
+        "scenario": "SAML-D",
+        "dataset": "SAML-D",
+        "train_dataset_name": "samld",
+        "eval_dataset_name": "samld",
         "evaluation_mode": "held_out_test",
         "model_type": "xgboost",
-        "feature_set": "prepared",
+        "feature_set": "engineered",
         "threshold": DEFAULT_THRESHOLD,
-        "output_file": "synthaml_xgboost_prepared.csv",
+        "output_file": "samld_xgboost_engineered.csv",
     },
     {
         "job_id": "variant_1_lightgbm_engineered",
@@ -169,7 +170,6 @@ BENCHMARK_JOBS: list[dict[str, Any]] = [
     },
 ]
 
-
 NUMERIC_COLUMNS = [
     "threshold",
     "roc_auc",
@@ -199,9 +199,7 @@ NUMERIC_COLUMNS = [
 
 
 def configure_benchmark_mlflow() -> None:
-    """
-    Настраивает локальное MLflow-хранилище для benchmark-задач.
-    """
+    """Настраивает локальное MLflow-хранилище для benchmark-задач."""
     import mlflow
 
     tracking_uri = BENCHMARK_MLFLOW_TRACKING_URI
@@ -218,10 +216,6 @@ def configure_benchmark_mlflow() -> None:
 
 
 def split_counts(total_rows: int) -> tuple[int, int, int]:
-    """
-    Возвращает размеры train / valid / test так же,
-    как это делает AMLModelTrainer.split_dataset().
-    """
     train_rows = int(total_rows * 0.7)
     valid_rows = int(total_rows * 0.15)
     test_rows = total_rows - train_rows - valid_rows
@@ -235,13 +229,8 @@ def calculate_business_metrics(
     threshold: float,
     top_k_values: tuple[int, ...] = (100, 500),
 ) -> dict[str, float | int]:
-    """
-    Считает эксплуатационные метрики:
-    FPR, alert rate, confusion matrix, Precision@k, Recall@k и Lift@k.
-    """
     y_true = np.asarray(y_true).astype(int)
     y_proba = np.asarray(y_proba).astype(float)
-
     y_pred = (y_proba >= threshold).astype(int)
 
     tp = int(((y_pred == 1) & (y_true == 1)).sum())
@@ -288,10 +277,6 @@ def calculate_business_metrics(
 
 
 def get_base_categorical_columns(df: pd.DataFrame) -> list[str]:
-    """
-    Возвращает категориальные признаки основного Fraud-датасета,
-    которые реально присутствуют в текущем датафрейме.
-    """
     categorical_candidates = [
         "payment_type",
         "employment_status",
@@ -307,9 +292,6 @@ def get_raw_numerical_columns(
     df: pd.DataFrame,
     categorical_columns: list[str],
 ) -> list[str]:
-    """
-    Возвращает числовые признаки для raw-сценария.
-    """
     excluded_columns = set(categorical_columns + [TARGET_COLUMN, "event_time"])
 
     return [
@@ -346,41 +328,38 @@ def load_and_prepare_main_dataset(
             feature_result.categorical_columns,
             feature_result.numerical_columns,
         )
-
     elif feature_set == "raw":
         categorical_columns = get_base_categorical_columns(transformed_df)
         numerical_columns = get_raw_numerical_columns(transformed_df, categorical_columns)
         prepared = (transformed_df, categorical_columns, numerical_columns)
-
     else:
-        raise ValueError(f"Для набора {dataset_name} неизвестный feature_set='{feature_set}'")
+        raise ValueError(
+            f"Для набора {dataset_name} неизвестный feature_set='{feature_set}'"
+        )
 
     cache[cache_key] = prepared
     return prepared
 
 
-def load_and_prepare_synthaml_dataset(
+def load_and_prepare_samld_dataset(
     cache: dict[str, tuple[pd.DataFrame, list[str], list[str]]],
 ) -> tuple[pd.DataFrame, list[str], list[str]]:
-    cache_key = "synthaml:prepared"
+    cache_key = "samld:prepared"
 
     if cache_key in cache:
         return cache[cache_key]
 
     loader = DataLoader()
-    alerts_df = loader.load_dataset("synthaml_alerts")
-    transactions_df = loader.load_dataset("synthaml_transactions")
+    raw_df = loader.load_dataset("samld")
 
-    synthaml_df = prepare_synthaml_dataset_from_frames(alerts_df, transactions_df)
+    if settings.samld_max_rows and settings.samld_max_rows > 0:
+        raw_df = raw_df.head(settings.samld_max_rows).copy()
+        logger.info(f"SAML-D ограничен первыми rows={len(raw_df)} по SAMLD_MAX_ROWS")
 
-    categorical_columns: list[str] = []
-    numerical_columns = [
-        col
-        for col in synthaml_df.columns
-        if col not in categorical_columns + [TARGET_COLUMN]
-    ]
+    samld_df = prepare_samld_dataset_from_frame(raw_df)
+    categorical_columns, numerical_columns = get_samld_feature_columns(samld_df)
 
-    prepared = (synthaml_df, categorical_columns, numerical_columns)
+    prepared = (samld_df, categorical_columns, numerical_columns)
     cache[cache_key] = prepared
 
     return prepared
@@ -391,8 +370,8 @@ def load_and_prepare_dataset(
     feature_set: str,
     cache: dict[str, tuple[pd.DataFrame, list[str], list[str]]],
 ) -> tuple[pd.DataFrame, list[str], list[str]]:
-    if dataset_name == "synthaml":
-        return load_and_prepare_synthaml_dataset(cache)
+    if dataset_name == "samld":
+        return load_and_prepare_samld_dataset(cache)
 
     return load_and_prepare_main_dataset(dataset_name, feature_set, cache)
 
@@ -422,10 +401,6 @@ def get_evaluation_dataframe(
 
 
 def get_validation_dataframe_from_train_df(train_df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Возвращает validation-часть обучающего набора.
-    Порог подбирается только на validation, а не на test/external dataset.
-    """
     train_rows, valid_rows, _ = split_counts(len(train_df))
     return train_df.iloc[train_rows:train_rows + valid_rows].copy()
 
@@ -434,12 +409,6 @@ def calculate_threshold_modes(
     y_valid: np.ndarray,
     y_valid_proba: np.ndarray,
 ) -> dict[str, float]:
-    """
-    Подбирает несколько threshold-режимов на validation-выборке.
-
-    Эти режимы влияют на precision/recall/F1/FPR/alert rate,
-    но не меняют ROC-AUC, PR-AUC и top-k метрики.
-    """
     rows: list[dict[str, float]] = []
 
     for threshold in np.round(np.arange(0.01, 1.00, 0.01), 2):
@@ -482,6 +451,7 @@ def calculate_threshold_modes(
         row for row in rows
         if row["alert_rate"] <= 0.20
     ]
+
     if alert_20_candidates:
         best_alert_20 = sorted(
             alert_20_candidates,
@@ -494,6 +464,7 @@ def calculate_threshold_modes(
         row for row in rows
         if row["alert_rate"] <= 0.30
     ]
+
     if alert_30_candidates:
         best_alert_30 = sorted(
             alert_30_candidates,
@@ -506,6 +477,7 @@ def calculate_threshold_modes(
         row for row in rows
         if row["false_positive_rate"] <= 0.05
     ]
+
     if fpr_05_candidates:
         best_fpr_05 = sorted(
             fpr_05_candidates,
@@ -530,7 +502,7 @@ def write_rows_csv(rows: list[dict[str, Any]], output_path: Path) -> None:
 def sort_benchmark_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     scenario_order = {
         "Base": 1,
-        "SynthAML": 2,
+        "SAML-D": 2,
         "Variant I": 3,
         "Variant II": 4,
     }
@@ -547,6 +519,7 @@ def sort_benchmark_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     )
 
     sorted_df = sorted_df.drop(columns=["_scenario_order"])
+
     return sorted_df
 
 
@@ -578,26 +551,28 @@ def run_benchmark_job_task(job: dict[str, Any]) -> dict[str, Any]:
     trainer = AMLModelTrainer()
 
     start_train = time.perf_counter()
+
     training_result = trainer.train(
         df=train_df,
         categorical_columns=categorical_columns,
         numerical_columns=numerical_columns,
         model_type=str(job["model_type"]),
     )
+
     train_time_sec = time.perf_counter() - start_train
 
     unique_bundle_path = (
         BENCHMARK_MODELS_DIR
         / f"{job['job_id']}_{job['model_type']}_{job['feature_set']}_bundle.joblib"
     )
+
     shutil.copy2(training_result.bundle_path, unique_bundle_path)
 
     predictor = AMLPredictor(str(unique_bundle_path))
 
-    # Threshold-режимы выбираются на validation-части train dataset.
     valid_df = get_validation_dataframe_from_train_df(train_df)
-
     valid_prediction_df = predictor.predict_proba(valid_df)
+
     y_valid = valid_df[TARGET_COLUMN].astype(int).to_numpy()
     y_valid_proba = valid_prediction_df["prediction_score"].astype(float).to_numpy()
 
@@ -606,7 +581,6 @@ def run_benchmark_job_task(job: dict[str, Any]) -> dict[str, Any]:
         y_valid_proba=y_valid_proba,
     )
 
-    # Итоговая оценка выполняется на held-out test или external dataset.
     eval_df = get_evaluation_dataframe(job, cache)
 
     start_inference = time.perf_counter()
@@ -616,7 +590,6 @@ def run_benchmark_job_task(job: dict[str, Any]) -> dict[str, Any]:
     y_true = eval_df[TARGET_COLUMN].astype(int).to_numpy()
     y_proba = prediction_df["prediction_score"].astype(float).to_numpy()
 
-    # Основной результат сохраняется как раньше: одна строка при фиксированном threshold=0.5.
     default_threshold = float(job.get("threshold", DEFAULT_THRESHOLD))
 
     default_quality_metrics = calculate_classification_metrics(
@@ -673,7 +646,6 @@ def run_benchmark_job_task(job: dict[str, Any]) -> dict[str, Any]:
     output_path = METRICS_DIR / str(job["output_file"])
     write_single_row_csv(result_row, output_path)
 
-    # Дополнительный файл: все threshold-режимы для нового анализа.
     threshold_rows: list[dict[str, Any]] = []
 
     for threshold_mode, threshold in threshold_modes.items():
@@ -704,9 +676,11 @@ def run_benchmark_job_task(job: dict[str, Any]) -> dict[str, Any]:
                 "feature_set": job["feature_set"],
                 "threshold_mode": threshold_mode,
                 "threshold": threshold,
-                "threshold_selected_on": "validation"
-                if threshold_mode != THRESHOLD_MODE_DEFAULT
-                else "fixed",
+                "threshold_selected_on": (
+                    "validation"
+                    if threshold_mode != THRESHOLD_MODE_DEFAULT
+                    else "fixed"
+                ),
                 "roc_auc": quality_metrics["roc_auc"],
                 "pr_auc": quality_metrics["pr_auc"],
                 "precision": quality_metrics["precision"],
@@ -795,7 +769,7 @@ def build_benchmark_tables_task() -> dict[str, Any]:
 
     scenario_file_map = {
         "Base": "benchmark_base.csv",
-        "SynthAML": "benchmark_synthaml.csv",
+        "SAML-D": "benchmark_samld.csv",
         "Variant I": "benchmark_variant_1.csv",
         "Variant II": "benchmark_variant_2.csv",
     }
@@ -841,7 +815,9 @@ def build_benchmark_tables_task() -> dict[str, Any]:
         "source_file",
     ]
 
-    chapter_df = all_df[[col for col in chapter_columns if col in all_df.columns]].copy()
+    chapter_df = all_df[
+        [col for col in chapter_columns if col in all_df.columns]
+    ].copy()
 
     chapter_path = METRICS_DIR / "benchmark_for_chapter_3_2.csv"
     chapter_df.to_csv(chapter_path, index=False)
@@ -861,7 +837,9 @@ def build_benchmark_tables_task() -> dict[str, Any]:
         "source_file",
     ]
 
-    lift_df = all_df[[col for col in lift_columns if col in all_df.columns]].copy()
+    lift_df = all_df[
+        [col for col in lift_columns if col in all_df.columns]
+    ].copy()
 
     lift_path = METRICS_DIR / "benchmark_lift_for_chapter_3_2.csv"
     lift_df.to_csv(lift_path, index=False)
@@ -894,7 +872,9 @@ def build_benchmark_tables_task() -> dict[str, Any]:
         output_paths["benchmark_threshold_modes"] = str(threshold_all_path)
 
         best_f1_idx = threshold_all_df.groupby("scenario")["f1_score"].idxmax()
-        best_f1_df = sort_benchmark_dataframe(threshold_all_df.loc[best_f1_idx].copy())
+        best_f1_df = sort_benchmark_dataframe(
+            threshold_all_df.loc[best_f1_idx].copy()
+        )
 
         best_f1_path = METRICS_DIR / "benchmark_best_by_f1_threshold_modes.csv"
         best_f1_df.to_csv(best_f1_path, index=False)
@@ -904,9 +884,13 @@ def build_benchmark_tables_task() -> dict[str, Any]:
             [col for col in chapter_columns if col in threshold_all_df.columns]
         ].copy()
 
-        threshold_chapter_path = METRICS_DIR / "benchmark_threshold_modes_for_chapter_3_2.csv"
+        threshold_chapter_path = (
+            METRICS_DIR / "benchmark_threshold_modes_for_chapter_3_2.csv"
+        )
         threshold_chapter_df.to_csv(threshold_chapter_path, index=False)
-        output_paths["benchmark_threshold_modes_for_chapter_3_2"] = str(threshold_chapter_path)
+        output_paths["benchmark_threshold_modes_for_chapter_3_2"] = str(
+            threshold_chapter_path
+        )
 
     logger.info(f"Итоговые benchmark-таблицы сохранены в {METRICS_DIR}")
 

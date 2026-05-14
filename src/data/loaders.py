@@ -9,7 +9,14 @@ from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
-DatasetName = Literal["base", "variant_1", "variant_2", "synthaml_alerts", "synthaml_transactions"]
+DatasetName = Literal[
+    "base",
+    "variant_1",
+    "variant_2",
+    "synthaml_alerts",
+    "synthaml_transactions",
+    "samld",
+]
 
 
 class DataLoader:
@@ -20,11 +27,11 @@ class DataLoader:
             "variant_2": Path(settings.drift_dataset_2),
             "synthaml_alerts": Path(settings.synthaml_alerts),
             "synthaml_transactions": Path(settings.synthaml_transactions),
+            "samld": Path(settings.samld_dataset),
         }
 
     def load_from_path(self, path: str | Path) -> pd.DataFrame:
         path = Path(path)
-
         logger.info(f"Загрузка датасета из файла: {path}")
 
         if not path.exists():
@@ -38,16 +45,25 @@ class DataLoader:
     def load_dataset(self, dataset_name: DatasetName) -> pd.DataFrame:
         if dataset_name not in self.dataset_paths:
             allowed = ", ".join(self.dataset_paths.keys())
-            raise ValueError(f"Неизвестный датасет: {dataset_name}. Допустимые значения: {allowed}")
+            raise ValueError(
+                f"Неизвестный датасет: {dataset_name}. "
+                f"Допустимые значения: {allowed}"
+            )
 
         dataset_path = self.dataset_paths[dataset_name]
-        logger.info(f"Выбран преднастроенный датасет '{dataset_name}' -> {dataset_path}")
+        logger.info(
+            f"Выбран преднастроенный датасет '{dataset_name}' -> {dataset_path}"
+        )
 
         return self.load_from_path(dataset_path)
 
-    def save_dataset(self, df: pd.DataFrame, path: str | Path, index: bool = False) -> None:
+    def save_dataset(
+        self,
+        df: pd.DataFrame,
+        path: str | Path,
+        index: bool = False,
+    ) -> None:
         path = Path(path)
-
         logger.info(f"Сохранение датасета в файл: {path}")
 
         if path.suffix == ".csv":
