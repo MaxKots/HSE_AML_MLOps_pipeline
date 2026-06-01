@@ -1,0 +1,16 @@
+feature,mean_abs_shap
+is_cross_currency,0.79241866
+Amount,0.7908403
+Payment_type_Cash Withdrawal,0.6980638
+Received_currency_UK pounds,0.58951324
+Payment_type_Cash Deposit,0.48543912
+is_cross_border,0.2386785
+day,0.2143665
+Payment_currency_UK pounds,0.17740427
+Payment_type_Cross-border,0.112409815
+Receiver_bank_location_UK,0.09288159
+amount_abs,0.09026573
+Receiver_bank_location_Albania,0.06580598
+Receiver_bank_location_Morocco,0.06508204
+hour,0.062086474
+amount_log1p,0.05671929

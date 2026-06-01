@@ -1,12 +1,12 @@
 # Все артефакты
-/artifacts/metrics/
-/artifacts/models/
-/artifacts/predictions/
-/artifacts/reports/
-/artifacts/shap/
+#/artifacts/metrics/
+#/artifacts/models/
+#/artifacts/predictions/
+#/artifacts/reports/
+#/artifacts/shap/
 
 # Логи прогонов
-/mlruns/
+artifacts/mlruns/
 /logs/
 
 # Данные

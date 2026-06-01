@@ -1,0 +1,57 @@
+{
+  "request_id": "ab9b6df2-e236-4a4e-a916-49341e3daee1",
+  "timestamp_utc": "2026-04-07T22:23:21.481181",
+  "mode": "single",
+  "model_type": "xgboost",
+  "latency_ms": 437.8943880001316,
+  "payload": {
+    "income": 0.8,
+    "name_email_similarity": 0.2,
+    "prev_address_months_count": 2,
+    "current_address_months_count": 3,
+    "customer_age": 20,
+    "days_since_request": 5,
+    "intended_balcon_amount": 50.0,
+    "payment_type": "B",
+    "zip_count_4w": 60,
+    "velocity_6h": 900.0,
+    "velocity_24h": 1600.0,
+    "velocity_4w": 3200.0,
+    "bank_branch_count_8w": 1,
+    "date_of_birth_distinct_emails_4w": 3,
+    "employment_status": "self",
+    "credit_risk_score": 800.0,
+    "email_is_free": 1,
+    "housing_status": "rent",
+    "phone_home_valid": 0,
+    "phone_mobile_valid": 0,
+    "bank_months_count": 2,
+    "has_other_cards": 0,
+    "proposed_credit_limit": 8000.0,
+    "foreign_request": 1,
+    "source": "app",
+    "session_length_in_minutes": 1.0,
+    "device_os": "android",
+    "keep_alive_session": 0,
+    "device_distinct_emails_8w": 5,
+    "device_fraud_count": 3,
+    "month": 2
+  },
+  "result": {
+    "prediction_score": 0.28156837821006775,
+    "prediction_label": 0,
+    "recommendation": "green",
+    "top_positive_factors": [
+      {
+        "feature": "bank_tenure_to_age_ratio",
+        "shap_value": 0.028523962944746017,
+        "abs_shap_value": 0.028523962944746017,
+        "direction": "increase_risk"
+      }
+    ],
+    "top_negative_factors": [],
+    "human_readable_reasons": [
+      "Признак 'bank_tenure_to_age_ratio' повысил риск (SHAP=0.0285)"
+    ]
+  }
+}

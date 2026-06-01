@@ -1,0 +1,11 @@
+job_id,scenario,dataset,eval_dataset_name,evaluation_mode,model_type,feature_set,batch_size,inference_repeats,inference_time_sec_median,inference_time_sec_mean,inference_time_per_1000_sec,records_per_second
+base_lightgbm_raw,Base,Base,base,held_out_test,lightgbm,raw,150000,3,1.138273778007715,1.1441600646746035,0.007588491853384767,131778.49028775864
+base_lightgbm_engineered,Base,Base,base,held_out_test,lightgbm,engineered,150000,3,1.9406037959997775,1.9421459676668746,0.012937358639998515,77295.53055043967
+base_xgboost_raw,Base,Base,base,held_out_test,xgboost,raw,150000,3,0.7907540690066526,0.793815749003746,0.005271693793377684,189692.35300733946
+base_xgboost_engineered,Base,Base,base,held_out_test,xgboost,engineered,150000,3,1.631610174998059,1.6164636670000618,0.010877401166653727,91933.724304078
+samld_lightgbm_engineered,SAML-D,SAML-D,samld,held_out_test,lightgbm,engineered,1425729,3,9.406856989997323,9.460909260335029,0.006597927789921734,151562.7378534651
+samld_xgboost_engineered,SAML-D,SAML-D,samld,held_out_test,xgboost,engineered,1425729,3,8.657740459006163,8.737135097335946,0.006072500776098518,164676.80069074995
+variant_1_lightgbm_engineered,Variant I,Variant I,variant_1,external_dataset,lightgbm,engineered,1000000,3,13.66025061099208,13.659196592328954,0.01366025061099208,73205.0991213385
+variant_1_xgboost_engineered,Variant I,Variant I,variant_1,external_dataset,xgboost,engineered,1000000,3,11.32692059900728,11.245351406003465,0.01132692059900728,88285.24851561531
+variant_2_lightgbm_engineered,Variant II,Variant II,variant_2,external_dataset,lightgbm,engineered,1000000,3,13.761183050999534,13.901091839671912,0.013761183050999534,72668.17077383224
+variant_2_xgboost_engineered,Variant II,Variant II,variant_2,external_dataset,xgboost,engineered,1000000,3,11.303781786002219,11.359742607329585,0.011303781786002219,88465.96819821197

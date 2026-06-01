@@ -1,0 +1,16 @@
+feature,mean_abs_shap
+Amount,1.1625860775376733
+is_cross_currency,0.8191464538970449
+Payment_type_Cash Withdrawal,0.6783388564204935
+Received_currency_UK pounds,0.6006939549561242
+Payment_type_Cash Deposit,0.40868379630097196
+day,0.2810344786488348
+amount_abs,0.21904227298647275
+amount_log1p,0.15033886692122073
+is_cross_border,0.14789453973868208
+Payment_currency_UK pounds,0.12455923982879838
+Receiver_bank_location_UK,0.09808797162669745
+hour,0.07707638706087985
+Receiver_bank_location_Morocco,0.06893290794757684
+month,0.06445423746064503
+day_of_week,0.05745162196123793

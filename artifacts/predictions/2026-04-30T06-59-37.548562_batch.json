@@ -1,0 +1,166 @@
+{
+  "request_id": "16eaeb46-8d03-4ca0-b12f-b4c6cf150475",
+  "timestamp_utc": "2026-04-30T06:59:37.548562",
+  "mode": "batch",
+  "model_type": "xgboost",
+  "latency_ms": 307.4041199997737,
+  "payload": {
+    "batch_size": 2
+  },
+  "result": [
+    {
+      "row_index": 0,
+      "prediction_score": 0.041483502835035324,
+      "prediction_label": 0,
+      "recommendation": "green",
+      "top_positive_factors": [
+        {
+          "feature": "proposed_credit_limit",
+          "shap_value": 0.5715755980636459,
+          "abs_shap_value": 0.5715755980636459,
+          "direction": "increase_risk"
+        },
+        {
+          "feature": "device_distinct_emails_8w",
+          "shap_value": 0.47937506144080544,
+          "abs_shap_value": 0.47937506144080544,
+          "direction": "increase_risk"
+        },
+        {
+          "feature": "credit_limit_x_risk",
+          "shap_value": 0.3136361487850081,
+          "abs_shap_value": 0.3136361487850081,
+          "direction": "increase_risk"
+        },
+        {
+          "feature": "intended_balcon_amount",
+          "shap_value": 0.20371005721972324,
+          "abs_shap_value": 0.20371005721972324,
+          "direction": "increase_risk"
+        },
+        {
+          "feature": "phone_home_valid",
+          "shap_value": 0.19479791118646972,
+          "abs_shap_value": 0.19479791118646972,
+          "direction": "increase_risk"
+        }
+      ],
+      "top_negative_factors": [
+        {
+          "feature": "device_os",
+          "shap_value": -0.605077796819387,
+          "abs_shap_value": 0.605077796819387,
+          "direction": "decrease_risk"
+        },
+        {
+          "feature": "housing_status",
+          "shap_value": -0.35853712129755877,
+          "abs_shap_value": 0.35853712129755877,
+          "direction": "decrease_risk"
+        },
+        {
+          "feature": "days_since_request",
+          "shap_value": -0.1708945273203426,
+          "abs_shap_value": 0.1708945273203426,
+          "direction": "decrease_risk"
+        },
+        {
+          "feature": "date_of_birth_distinct_emails_4w",
+          "shap_value": -0.14926348054723348,
+          "abs_shap_value": 0.14926348054723348,
+          "direction": "decrease_risk"
+        },
+        {
+          "feature": "employment_status",
+          "shap_value": -0.11508997032069601,
+          "abs_shap_value": 0.11508997032069601,
+          "direction": "decrease_risk"
+        }
+      ],
+      "human_readable_reasons": [
+        "Запрошенный кредитный лимит увеличил риск (SHAP=0.5716)",
+        "Признак 'device_distinct_emails_8w' повысил риск (SHAP=0.4794)",
+        "Признак 'credit_limit_x_risk' повысил риск (SHAP=0.3136)",
+        "Признак 'intended_balcon_amount' повысил риск (SHAP=0.2037)",
+        "Признак 'phone_home_valid' повысил риск (SHAP=0.1948)"
+      ]
+    },
+    {
+      "row_index": 1,
+      "prediction_score": 0.0012199844932183623,
+      "prediction_label": 0,
+      "recommendation": "green",
+      "top_positive_factors": [
+        {
+          "feature": "device_os",
+          "shap_value": 0.605077796819387,
+          "abs_shap_value": 0.605077796819387,
+          "direction": "increase_risk"
+        },
+        {
+          "feature": "housing_status",
+          "shap_value": 0.35853712129755877,
+          "abs_shap_value": 0.35853712129755877,
+          "direction": "increase_risk"
+        },
+        {
+          "feature": "days_since_request",
+          "shap_value": 0.1708945273203426,
+          "abs_shap_value": 0.1708945273203426,
+          "direction": "increase_risk"
+        },
+        {
+          "feature": "date_of_birth_distinct_emails_4w",
+          "shap_value": 0.14926348054723348,
+          "abs_shap_value": 0.14926348054723348,
+          "direction": "increase_risk"
+        },
+        {
+          "feature": "employment_status",
+          "shap_value": 0.11508997032069601,
+          "abs_shap_value": 0.11508997032069601,
+          "direction": "increase_risk"
+        }
+      ],
+      "top_negative_factors": [
+        {
+          "feature": "proposed_credit_limit",
+          "shap_value": -0.5715755980636459,
+          "abs_shap_value": 0.5715755980636459,
+          "direction": "decrease_risk"
+        },
+        {
+          "feature": "device_distinct_emails_8w",
+          "shap_value": -0.47937506144080544,
+          "abs_shap_value": 0.47937506144080544,
+          "direction": "decrease_risk"
+        },
+        {
+          "feature": "credit_limit_x_risk",
+          "shap_value": -0.3136361487850081,
+          "abs_shap_value": 0.3136361487850081,
+          "direction": "decrease_risk"
+        },
+        {
+          "feature": "intended_balcon_amount",
+          "shap_value": -0.20371005721972324,
+          "abs_shap_value": 0.20371005721972324,
+          "direction": "decrease_risk"
+        },
+        {
+          "feature": "phone_home_valid",
+          "shap_value": -0.19479791118646972,
+          "abs_shap_value": 0.19479791118646972,
+          "direction": "decrease_risk"
+        }
+      ],
+      "human_readable_reasons": [
+        "Характеристика операционной системы устройства повлияла на риск (SHAP=0.6051)",
+        "Признак 'housing_status' повысил риск (SHAP=0.3585)",
+        "Признак 'days_since_request' повысил риск (SHAP=0.1709)",
+        "Признак 'date_of_birth_distinct_emails_4w' повысил риск (SHAP=0.1493)",
+        "Признак 'employment_status' повысил риск (SHAP=0.1151)"
+      ]
+    }
+  ]
+}

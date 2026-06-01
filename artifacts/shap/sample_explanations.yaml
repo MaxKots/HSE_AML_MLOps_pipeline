@@ -1,0 +1,217 @@
+explanations:
+- row_index: 0
+  prediction_score: 0.019117146730422974
+  prediction_label: 0
+  top_positive_factors:
+  - feature: current_address_months_count
+    shap_value: 0.4238244499982102
+    abs_shap_value: 0.4238244499982102
+    direction: increase_risk
+  - feature: name_email_similarity
+    shap_value: 0.29895849512249695
+    abs_shap_value: 0.29895849512249695
+    direction: increase_risk
+  - feature: prev_address_months_count_is_missing
+    shap_value: 0.29603759573947175
+    abs_shap_value: 0.29603759573947175
+    direction: increase_risk
+  - feature: has_other_cards
+    shap_value: 0.2691000902443193
+    abs_shap_value: 0.2691000902443193
+    direction: increase_risk
+  - feature: housing_status
+    shap_value: 0.22865647570579314
+    abs_shap_value: 0.22865647570579314
+    direction: increase_risk
+  top_negative_factors:
+  - feature: email_is_free
+    shap_value: -0.16460981362033636
+    abs_shap_value: 0.16460981362033636
+    direction: decrease_risk
+  - feature: device_os
+    shap_value: -0.1614422364975326
+    abs_shap_value: 0.1614422364975326
+    direction: decrease_risk
+  - feature: bank_months_count
+    shap_value: -0.14548276982386596
+    abs_shap_value: 0.14548276982386596
+    direction: decrease_risk
+  - feature: keep_alive_session
+    shap_value: -0.10058088946389035
+    abs_shap_value: 0.10058088946389035
+    direction: decrease_risk
+  - feature: credit_risk_score
+    shap_value: -0.06667233546322678
+    abs_shap_value: 0.06667233546322678
+    direction: decrease_risk
+  raw_top_features:
+  - feature: current_address_months_count
+    shap_value: 0.4238244499982102
+    abs_shap_value: 0.4238244499982102
+    direction: increase_risk
+  - feature: name_email_similarity
+    shap_value: 0.29895849512249695
+    abs_shap_value: 0.29895849512249695
+    direction: increase_risk
+  - feature: prev_address_months_count_is_missing
+    shap_value: 0.29603759573947175
+    abs_shap_value: 0.29603759573947175
+    direction: increase_risk
+  - feature: has_other_cards
+    shap_value: 0.2691000902443193
+    abs_shap_value: 0.2691000902443193
+    direction: increase_risk
+  - feature: housing_status
+    shap_value: 0.22865647570579314
+    abs_shap_value: 0.22865647570579314
+    direction: increase_risk
+  human_readable_reasons:
+  - Признак 'current_address_months_count' повысил риск (SHAP=0.4238)
+  - Признак 'name_email_similarity' повысил риск (SHAP=0.2990)
+  - Признак 'prev_address_months_count_is_missing' повысил риск (SHAP=0.2960)
+  - Признак 'has_other_cards' повысил риск (SHAP=0.2691)
+  - Признак 'housing_status' повысил риск (SHAP=0.2287)
+- row_index: 1
+  prediction_score: 0.0015838253311812878
+  prediction_label: 0
+  top_positive_factors:
+  - feature: proposed_credit_limit
+    shap_value: 0.183692507899832
+    abs_shap_value: 0.183692507899832
+    direction: increase_risk
+  - feature: employment_status
+    shap_value: 0.1741511359985452
+    abs_shap_value: 0.1741511359985452
+    direction: increase_risk
+  - feature: velocity_4w
+    shap_value: 0.1668817577912705
+    abs_shap_value: 0.1668817577912705
+    direction: increase_risk
+  - feature: has_other_cards
+    shap_value: 0.14062172061530873
+    abs_shap_value: 0.14062172061530873
+    direction: increase_risk
+  - feature: bank_tenure_to_age_ratio
+    shap_value: 0.12485524999210611
+    abs_shap_value: 0.12485524999210611
+    direction: increase_risk
+  top_negative_factors:
+  - feature: prev_address_months_count_is_missing
+    shap_value: -0.4153451991267502
+    abs_shap_value: 0.4153451991267502
+    direction: decrease_risk
+  - feature: current_address_months_count
+    shap_value: -0.3779411426294246
+    abs_shap_value: 0.3779411426294246
+    direction: decrease_risk
+  - feature: phone_home_valid
+    shap_value: -0.35081907486310226
+    abs_shap_value: 0.35081907486310226
+    direction: decrease_risk
+  - feature: device_os
+    shap_value: -0.2855953664693516
+    abs_shap_value: 0.2855953664693516
+    direction: decrease_risk
+  - feature: intended_balcon_amount
+    shap_value: -0.21329212373238987
+    abs_shap_value: 0.21329212373238987
+    direction: decrease_risk
+  raw_top_features:
+  - feature: prev_address_months_count_is_missing
+    shap_value: -0.4153451991267502
+    abs_shap_value: 0.4153451991267502
+    direction: decrease_risk
+  - feature: current_address_months_count
+    shap_value: -0.3779411426294246
+    abs_shap_value: 0.3779411426294246
+    direction: decrease_risk
+  - feature: phone_home_valid
+    shap_value: -0.35081907486310226
+    abs_shap_value: 0.35081907486310226
+    direction: decrease_risk
+  - feature: device_os
+    shap_value: -0.2855953664693516
+    abs_shap_value: 0.2855953664693516
+    direction: decrease_risk
+  - feature: intended_balcon_amount
+    shap_value: -0.21329212373238987
+    abs_shap_value: 0.21329212373238987
+    direction: decrease_risk
+  human_readable_reasons:
+  - Запрошенный кредитный лимит увеличил риск (SHAP=0.1837)
+  - Признак 'employment_status' повысил риск (SHAP=0.1742)
+  - Признак 'velocity_4w' повысил риск (SHAP=0.1669)
+  - Признак 'has_other_cards' повысил риск (SHAP=0.1406)
+  - Признак 'bank_tenure_to_age_ratio' повысил риск (SHAP=0.1249)
+- row_index: 2
+  prediction_score: 0.0012240356300026178
+  prediction_label: 0
+  top_positive_factors:
+  - feature: prev_address_months_count_is_missing
+    shap_value: 0.23943770923360716
+    abs_shap_value: 0.23943770923360716
+    direction: increase_risk
+  - feature: bank_months_count
+    shap_value: 0.19739392924821003
+    abs_shap_value: 0.19739392924821003
+    direction: increase_risk
+  - feature: phone_home_valid
+    shap_value: 0.1518221593461931
+    abs_shap_value: 0.1518221593461931
+    direction: increase_risk
+  - feature: email_is_free
+    shap_value: 0.09509387016878464
+    abs_shap_value: 0.09509387016878464
+    direction: increase_risk
+  - feature: housing_status
+    shap_value: 0.06982807831082027
+    abs_shap_value: 0.06982807831082027
+    direction: increase_risk
+  top_negative_factors:
+  - feature: has_other_cards
+    shap_value: -0.5300042077549734
+    abs_shap_value: 0.5300042077549734
+    direction: decrease_risk
+  - feature: device_os
+    shap_value: -0.28434742703684607
+    abs_shap_value: 0.28434742703684607
+    direction: decrease_risk
+  - feature: credit_risk_score
+    shap_value: -0.1536512972554192
+    abs_shap_value: 0.1536512972554192
+    direction: decrease_risk
+  - feature: employment_status
+    shap_value: -0.11628120885579847
+    abs_shap_value: 0.11628120885579847
+    direction: decrease_risk
+  - feature: velocity_24h
+    shap_value: -0.1134601322148228
+    abs_shap_value: 0.1134601322148228
+    direction: decrease_risk
+  raw_top_features:
+  - feature: has_other_cards
+    shap_value: -0.5300042077549734
+    abs_shap_value: 0.5300042077549734
+    direction: decrease_risk
+  - feature: device_os
+    shap_value: -0.28434742703684607
+    abs_shap_value: 0.28434742703684607
+    direction: decrease_risk
+  - feature: prev_address_months_count_is_missing
+    shap_value: 0.23943770923360716
+    abs_shap_value: 0.23943770923360716
+    direction: increase_risk
+  - feature: bank_months_count
+    shap_value: 0.19739392924821003
+    abs_shap_value: 0.19739392924821003
+    direction: increase_risk
+  - feature: credit_risk_score
+    shap_value: -0.1536512972554192
+    abs_shap_value: 0.1536512972554192
+    direction: decrease_risk
+  human_readable_reasons:
+  - Признак 'prev_address_months_count_is_missing' повысил риск (SHAP=0.2394)
+  - Признак 'bank_months_count' повысил риск (SHAP=0.1974)
+  - Признак 'phone_home_valid' повысил риск (SHAP=0.1518)
+  - Признак 'email_is_free' повысил риск (SHAP=0.0951)
+  - Признак 'housing_status' повысил риск (SHAP=0.0698)
