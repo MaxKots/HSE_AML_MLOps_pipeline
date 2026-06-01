@@ -5,6 +5,7 @@ import requests
 import streamlit as st
 
 from config.settings import settings
+from src.data import DataLoader
 from src.utils.io import load_dataframe, read_yaml
 from src.utils.paths import get_artifacts_dir
 
@@ -15,6 +16,28 @@ st.set_page_config(
 )
 
 API_URL = settings.dashboard_api_url
+AIRFLOW_API_URL = settings.airflow_api_url
+AIRFLOW_USERNAME = settings.airflow_username
+AIRFLOW_PASSWORD = settings.airflow_password
+
+DAG_OPTIONS = {
+    "Training": "aml_training_dag",
+    "Benchmark": "aml_benchmark_dag",
+    "Drift": "aml_drift_dag",
+}
+
+DATASET_OPTIONS = {
+    "Base": "base",
+    "Variant I": "variant_1",
+    "Variant II": "variant_2",
+    "SAML-D": "samld",
+}
+
+SOURCE_OPTIONS = {
+    "CSV": "csv",
+    "S3 / MinIO": "s3",
+    "PostgreSQL": "postgres",
+}
 
 INTEGER_COLUMNS = [
     "prev_address_months_count",
@@ -67,6 +90,26 @@ def load_local_dataset(dataset_name: str) -> pd.DataFrame:
 
     path = dataset_map[dataset_name]
     return load_dataframe(path)
+
+
+@st.cache_data(show_spinner=False)
+def preview_dataset_from_source(dataset_name: str, source: str, limit: int) -> pd.DataFrame:
+    loader = DataLoader()
+    return loader.load_dataset(dataset_name, source_override=source, nrows=limit)
+
+
+def trigger_airflow_dag(dag_id: str, conf: dict) -> dict:
+    response = requests.post(
+        f"{AIRFLOW_API_URL}/api/v1/dags/{dag_id}/dagRuns",
+        auth=(AIRFLOW_USERNAME, AIRFLOW_PASSWORD),
+        json={"conf": conf},
+        timeout=20,
+    )
+
+    if response.status_code not in (200, 201):
+        raise ValueError(f"Airflow API error {response.status_code}: {response.text}")
+
+    return response.json()
 
 
 def check_api_health() -> dict:
@@ -175,7 +218,7 @@ def main() -> None:
     else:
         st.error(f"API недоступен: {health.get('error', 'unknown error')}")
 
-    tab1, tab2, tab3 = st.tabs(["Скоринг транзакций", "Drift monitoring", "О системе"])
+    tab1, tab2, tab3, tab4 = st.tabs(["Скоринг транзакций", "Drift monitoring", "Запуск пайплайнов", "О системе"])
 
     with tab1:
         st.subheader("Скоринг транзакций")
@@ -275,6 +318,93 @@ def main() -> None:
             )
 
     with tab3:
+        st.subheader("Источник данных и запуск Airflow DAG")
+        st.caption("Dashboard выбирает источник данных и передаёт параметры запуска в Airflow. Вычисления выполняются в DAG, а не внутри Streamlit.")
+
+        col_left, col_right = st.columns(2)
+
+        with col_left:
+            selected_dataset_label = st.selectbox(
+                "Датасет для проверки загрузки",
+                options=list(DATASET_OPTIONS.keys()),
+                index=0,
+                key="source_dataset_select",
+            )
+            selected_source_label = st.selectbox(
+                "Источник данных",
+                options=list(SOURCE_OPTIONS.keys()),
+                index=0,
+                key="source_type_select",
+            )
+            preview_limit = st.number_input(
+                "Количество строк для preview",
+                min_value=10,
+                max_value=5000,
+                value=100,
+                step=10,
+            )
+
+            dataset_code = DATASET_OPTIONS[selected_dataset_label]
+            source_code = SOURCE_OPTIONS[selected_source_label]
+
+            if st.button("Проверить загрузку", key="preview_dataset_button"):
+                with st.spinner("Загружаю preview из выбранного источника..."):
+                    try:
+                        preview_df = preview_dataset_from_source(
+                            dataset_name=dataset_code,
+                            source=source_code,
+                            limit=int(preview_limit),
+                        )
+                        st.success(
+                            f"Данные загружены: rows={len(preview_df)}, cols={len(preview_df.columns)}"
+                        )
+                        st.dataframe(preview_df.head(20), use_container_width=True)
+                    except Exception as exc:
+                        st.error(f"Ошибка загрузки: {exc}")
+
+        with col_right:
+            scenario_label = st.selectbox(
+                "Пайплайн",
+                options=list(DAG_OPTIONS.keys()),
+                index=0,
+                key="dag_scenario_select",
+            )
+
+            dag_id = DAG_OPTIONS[scenario_label]
+            st.write(f"Airflow DAG: `{dag_id}`")
+            st.write(f"Airflow API: `{AIRFLOW_API_URL}`")
+
+            if scenario_label == "Drift":
+                reference_label = st.selectbox("Reference dataset", ["Base"], index=0)
+                current_label = st.selectbox("Current dataset", ["Variant I", "Variant II"], index=0)
+                dag_conf = {
+                    "reference_dataset_name": DATASET_OPTIONS[reference_label],
+                    "current_dataset_name": DATASET_OPTIONS[current_label],
+                    "source": SOURCE_OPTIONS[selected_source_label],
+                }
+            elif scenario_label == "Benchmark":
+                dag_conf = {
+                    "source": SOURCE_OPTIONS[selected_source_label],
+                }
+            else:
+                dag_conf = {
+                    "dataset_name": DATASET_OPTIONS[selected_dataset_label],
+                    "source": SOURCE_OPTIONS[selected_source_label],
+                }
+
+            st.markdown("#### Конфигурация запуска")
+            st.json(dag_conf)
+
+            if st.button("Запустить DAG", type="primary", key="trigger_dag_button"):
+                with st.spinner("Отправляю запрос в Airflow..."):
+                    try:
+                        dag_run = trigger_airflow_dag(dag_id=dag_id, conf=dag_conf)
+                        st.success(f"DAG `{dag_id}` запущен")
+                        st.json(dag_run)
+                    except Exception as exc:
+                        st.error(f"Ошибка запуска DAG: {exc}")
+
+    with tab4:
         st.subheader("О системе")
         st.markdown(
             """

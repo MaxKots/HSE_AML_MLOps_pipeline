@@ -25,12 +25,16 @@ default_args = {
 
 @dag(
     dag_id="aml_training_dag",
-    description="Обучение AML-модели на базовом датасете",
+    description="Обучение AML-модели на выбранном датасете и источнике данных",
     default_args=default_args,
     start_date=datetime(2025, 1, 1),
     schedule=None,
     catchup=False,
     tags=["aml", "training", "mlops"],
+    params={
+        "dataset_name": "base",
+        "source": "csv",
+    },
 )
 def aml_training_dag():
     start = EmptyOperator(task_id="start")
@@ -40,12 +44,15 @@ def aml_training_dag():
     def read_runtime_config_task() -> dict:
         context = get_current_context()
         dag_run = context.get("dag_run")
+        params = context.get("params") or {}
 
         conf = dag_run.conf if dag_run and dag_run.conf else {}
-        dataset_name = conf.get("dataset_name", "base")
+        dataset_name = conf.get("dataset_name") or params.get("dataset_name") or "base"
+        source = conf.get("source") or params.get("source") or "csv"
 
         runtime_config = {
             "dataset_name": dataset_name,
+            "source": source,
         }
 
         logger.info(f"Runtime-конфигурация прочитана: {runtime_config}")
@@ -54,10 +61,13 @@ def aml_training_dag():
     @task(task_id="run_training")
     def run_training_task(runtime_config: dict) -> dict:
         dataset_name = runtime_config["dataset_name"]
+        source = runtime_config.get("source")
 
-        logger.info(f"Запуск задачи обучения для датасета '{dataset_name}'")
+        logger.info(
+            f"Запуск задачи обучения для датасета '{dataset_name}', source='{source}'"
+        )
 
-        summary = run_training_pipeline(dataset_name=dataset_name)
+        summary = run_training_pipeline(dataset_name=dataset_name, source=source)
 
         logger.info("Задача обучения завершена")
         logger.info(pformat(summary))

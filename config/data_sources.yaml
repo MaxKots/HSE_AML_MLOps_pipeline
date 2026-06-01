@@ -1,0 +1,64 @@
+default_source: csv
+
+datasets:
+  base:
+    target_column: fraud_bool
+    csv:
+      path: data/raw/Base.csv
+    s3:
+      uri: s3://aml-data/raw/Base.csv
+    postgres:
+      table: datasets.base
+    api:
+      url: http://api:8000/datasets/base
+
+  variant_1:
+    target_column: fraud_bool
+    csv:
+      path: data/raw/Variant I.csv
+    s3:
+      uri: s3://aml-data/raw/Variant I.csv
+    postgres:
+      table: datasets.variant_1
+    api:
+      url: http://api:8000/datasets/variant_1
+
+  variant_2:
+    target_column: fraud_bool
+    csv:
+      path: data/raw/Variant II.csv
+    s3:
+      uri: s3://aml-data/raw/Variant II.csv
+    postgres:
+      table: datasets.variant_2
+    api:
+      url: http://api:8000/datasets/variant_2
+
+  samld:
+    target_column: Is_laundering
+    csv:
+      path: data/raw/SAML-D.csv
+    s3:
+      uri: s3://aml-data/raw/SAML-D.csv
+    postgres:
+      table: datasets.samld
+    api:
+      url: http://api:8000/datasets/samld
+
+  synthaml_alerts:
+    target_column: fraud_bool
+    csv:
+      path: data/raw/synthaml_alerts.csv
+    s3:
+      uri: s3://aml-data/raw/synthaml_alerts.csv
+    postgres:
+      table: datasets.synthaml_alerts
+
+  synthaml_transactions:
+    target_column: fraud_bool
+    csv:
+      path: data/raw/synthaml_transactions.csv
+    s3:
+      uri: s3://aml-data/raw/synthaml_transactions.csv
+    postgres:
+      table: datasets.synthaml_transactions

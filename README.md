@@ -1,17 +1,20 @@
 # AML Pipeline
 
-Сквозной MLOps-проект для выявления сомнительных финансовых операций.
+Сквозной MLOps-проект для риск-ориентированной обработки финансовых операций и формирования приоритетной очереди операций для последующего аналитического разбора.
 
 Проект покрывает полный жизненный цикл ML-решения:
+
 - загрузку и валидацию данных;
 - feature engineering;
-- обучение моделей;
+- обучение и сравнение моделей;
 - логирование экспериментов в MLflow;
-- интерпретацию через SHAP;
-- мониторинг дрейфа;
+- интерпретацию результатов через SHAP;
+- мониторинг дрейфа данных;
 - REST API для инференса;
 - Streamlit dashboard;
 - оркестрацию пайплайнов через Apache Airflow.
+
+Проект является исследовательским ML/MLOps-прототипом и не выполняет юридически значимую автоматическую квалификацию операций.
 
 ## Стек
 
@@ -32,113 +35,140 @@
 
 ![schema](https://github.com/MaxKots/HSE_AML_MLOps_pipeline/blob/main/.assets/schema.svg)
 
+Проект реализует управляемый ML/MLOps-контур: данные загружаются из выбранного источника, проходят проверку и подготовку, после чего используются в пайплайнах обучения, benchmark-сценариев, мониторинга дрейфа и сервисного инференса. Результаты экспериментов, метрики и артефакты сохраняются, а основные пайплайны запускаются и отслеживаются через Airflow.
+
 ## Что делает проект
 
-- загружает AML-датасеты из локальных файлов;
+- загружает данные из нескольких источников: CSV, S3/MinIO, PostgreSQL и API;
 - проверяет корректность схемы и целевой колонки;
-- строит дополнительные признаки для транзакционных данных;
+- строит дополнительные признаки для табличных и транзакционных данных;
 - обучает модели LightGBM и XGBoost;
-- сохраняет артефакты моделей и метрик;
+- сравнивает модели по метрикам бинарной классификации и риск-ориентированного ранжирования;
+- сохраняет модели, метрики и отчёты;
 - логирует эксперименты в MLflow;
 - строит SHAP-объяснения;
-- считает drift-отчёты;
-- предоставляет online и batch scoring через API;
-- визуализирует результаты в dashboard;
-- запускает training workflow через Airflow DAG'и.
+- формирует drift-отчёты;
+- предоставляет online и batch scoring через FastAPI;
+- визуализирует результаты в Streamlit dashboard;
+- запускает training, benchmark и drift workflow через Apache Airflow.
 
 ## Структура проекта
 
 ```text
-config/        конфиги проекта
-data/raw/      исходные датасеты
-data/processed/обработанные данные
-src/           основной код
-scripts/       точки запуска
-dags/          DAG'и Airflow
-artifacts/     модели, метрики, отчёты, predictions, SHAP
-logs/          логи сервисов и Airflow
-docker/        docker-init и служебные файлы
+config/         конфиги проекта, включая data_sources.yaml
+data/raw/       исходные датасеты
+data/processed/ обработанные данные
+src/            основной код
+scripts/        служебные точки запуска и вспомогательные сценарии
+dags/           DAG'и Airflow
+artifacts/      модели, метрики, отчёты, predictions, SHAP
+logs/           логи сервисов и Airflow
+docker/         docker-init и служебные файлы
+docs/           документация по запуску и настройке
 ```
-
-## Входные данные
-
-Для запуска необходимо положить в `data/raw/` следующие файлы:
-
-- `Base.csv`
-- `Variant I.csv`
-- `Variant II.csv`
-- `synthaml_alerts.csv`
-- `synthaml_transactions.csv`
-
-Целевая колонка для основного датасета:
-
-- `fraud_bool`
 
 ## Экспериментальная база
 
-В проекте используются две группы открытых наборов данных.
+В проекте используются две группы открытых экспериментальных данных.
 
-- `Base.csv`, `Variant I.csv`, `Variant II.csv` — табличные экспериментальные данные для обучения базовых моделей, анализа дрейфа и проверки воспроизводимости ML/MLOps-контура.
-- `synthaml_alerts.csv` и `synthaml_transactions.csv` — AML-ориентированная экспериментальная база SynthAML, используемая для дополнительной проверки архитектуры на данных, связанных с задачами противодействия отмыванию доходов.
+### Bank Account Fraud
 
-Для SynthAML исходные данные имеют двухтабличную структуру: таблицу алертов и таблицу транзакций. Перед обучением они агрегируются по идентификатору алерта в плоский набор признаков.
+Наборы `Base`, `Variant I` и `Variant II` используются для инженерной проверки ML/MLOps-контура, сравнения моделей на несбалансированных табличных данных и анализа drift-сценариев.
+
+Целевая колонка:
+
+```text
+fraud_bool
+```
+
+### SAML-D
+
+SAML-D используется как AML-ориентированная транзакционная экспериментальная база для дополнительной проверки архитектуры на данных, более близких к задачам финансового мониторинга.
+
+В проекте этот сценарий используется под внутренним ключом:
+
+```text
+samld
+```
+
+SAML-D применяется для оценки моделей в условиях выраженного дисбаланса классов и для анализа качества риск-ориентированного ранжирования.
+
+## Источники данных
+
+Единый save-load слой позволяет работать с разными источниками данных без изменения логики пайплайнов.
+
+Поддерживаемые источники:
+
+- `csv` — локальные файлы;
+- `s3` — S3-совместимое хранилище MinIO;
+- `postgres` — PostgreSQL;
+- `api` — внешний API-источник, если он описан в конфигурации.
+
+Карта датасетов и источников задаётся декларативно в файле:
+
+```text
+config/data_sources.yaml
+```
+
+Основные ключи датасетов:
+
+```text
+base
+variant_1
+variant_2
+samld
+```
+
+## Save-load контур
+
+Save-load контур добавляет единый слой загрузки и сохранения данных для training, benchmark и drift-сценариев.
+
+Основные элементы:
+
+- `config/data_sources.yaml` — карта датасетов и источников;
+- `src/data/data_sources.py` — единый слой доступа к данным;
+- `src/data/loaders.py` — `DataLoader` с поддержкой выбора источника;
+- `dashboard/app.py` — вкладка **Запуск пайплайнов**;
+- `dags/aml_training_dag.py` — обучение модели с параметрами `dataset_name` и `source`;
+- `dags/aml_drift_dag.py` — мониторинг дрейфа с параметрами `reference_dataset_name`, `current_dataset_name` и `source`;
+- `dags/aml_benchmark_dag.py` — воспроизводимый запуск benchmark-сценариев.
+
+Streamlit не выполняет вычислительные пайплайны самостоятельно. Dashboard передаёт параметры запуска в Airflow через REST API, а выполнение происходит внутри соответствующего DAG.
+
+## Основной пользовательский сценарий
+
+1. Пользователь открывает Streamlit dashboard.
+2. Во вкладке **Запуск пайплайнов** выбирает датасет, источник данных и тип пайплайна.
+3. Dashboard передаёт параметры запуска в Airflow.
+4. Airflow выполняет соответствующий DAG.
+5. Результаты сохраняются в `artifacts/`, отображаются в MLflow, Airflow UI и dashboard.
+
+Доступные датасеты в dashboard:
+
+- `Base`
+- `Variant I`
+- `Variant II`
+- `SAML-D`
+
+Доступные источники:
+
+- `CSV`
+- `S3 / MinIO`
+- `PostgreSQL`
+
+Доступные пайплайны:
+
+- `Training`
+- `Benchmark`
+- `Drift`
 
 ## Быстрый старт
 
-Подробная инструкция находится в файле `docs/setup.md`.
+Подробная инструкция по установке и настройке находится в файле:
 
-Если нужен полный пошаговый гайд по:
-- virtual environment;
-- Docker Compose;
-- Airflow;
-- MLflow;
-- проверке работы;
-- очистке проекта;
-
-смотри `docs/setup.md`.
-
-## Локальный запуск через venv
-
-Создание окружения:
-
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
+```text
+docs/setup.md
 ```
-
-Установка зависимостей:
-
-```bash
-python -m pip install --upgrade pip setuptools wheel
-pip install -r requirements.txt
-```
-
-Базовые команды:
-
-```bash
-python scripts/run_data_check.py
-python scripts/run_feature_engineering.py
-python scripts/run_train.py
-python scripts/run_drift_check.py
-python scripts/run_explain.py
-python scripts/run_api.py
-python scripts/run_dashboard.py
-```
-
-Запуск бенчмарка:
-```
-docker-compose exec api python scripts/run_benchmark.py
-```
-
-Бенчмарк сравнивает модели LightGBM и XGBoost на нескольких экспериментальных сценариях:
-
-- базовые эксперименты на Base.csv;
-- проверка устойчивости на Variant I.csv и Variant II.csv;
-- дополнительная AML-ориентированная проверка на SynthAML.
-
-Результаты сохраняются в artifacts/metrics/benchmark_results.csv и artifacts/metrics/benchmark_results.json
-
-## Запуск через Docker Compose
 
 Базовый запуск инфраструктуры:
 
@@ -146,96 +176,44 @@ docker-compose exec api python scripts/run_benchmark.py
 docker-compose up -d
 ```
 
-Если используется Airflow, в файле `.env` должна быть задана переменная:
-
-```env
-AIRFLOW_UID=1000
-```
-
-Если твой UID на Linux отличается, замени `1000` на результат команды:
-
-```bash
-id -u
-```
-
-Это нужно для корректной работы контейнеров Airflow с примонтированными локальными директориями и чтобы не возникали ошибки прав доступа.
-
 Типовые адреса сервисов:
 
 - MLflow: `http://localhost:5000`
 - Airflow: `http://localhost:8080`
 - API: `http://localhost:8000/docs`
 - Dashboard: `http://localhost:8501`
+- MinIO: `http://localhost:9001`
 
 ## Интерфейс dashboard
 
 ![streamlit](https://github.com/MaxKots/HSE_AML_MLOps_pipeline/blob/main/.assets/1.jpg)
 
+Dashboard используется для просмотра результатов скоринга, SHAP-объяснений, сведений о дрейфе и запуска пайплайнов через Airflow.
+
 ## Оркестрация в Airflow
 
-Airflow используется для запуска и мониторинга DAG'ов пайплайна, включая training workflow.
+Airflow используется для запуска и мониторинга training, benchmark и drift workflow.
 
 ![airflow](https://github.com/MaxKots/HSE_AML_MLOps_pipeline/blob/main/.assets/2.jpg)
 
-## Benchmark DAG в Airflow
+## Benchmark DAG
 
-Для воспроизводимого запуска экспериментальных сценариев в проекте предусмотрен отдельный benchmark DAG:
+Benchmark DAG предназначен для воспроизводимого запуска серии экспериментальных сценариев и формирования итоговых таблиц метрик.
 
-- файл: `dags/aml_benchmark_dag.py`
-- назначение: автоматический запуск серии benchmark-экспериментов и сбор итоговых таблиц для анализа результатов
+Файл:
 
-### Что делает benchmark DAG
-
-DAG последовательно запускает набор сценариев сравнения моделей на разных экспериментальных средах.
-
-Типовые конфигурации включают:
-
-- **Base**
-  - LightGBM, исходные признаки
-  - XGBoost, исходные признаки
-  - LightGBM, расширенные признаки
-  - XGBoost, расширенные признаки
-
-- **Variant I**
-  - LightGBM, расширенные признаки
-  - XGBoost, расширенные признаки
-
-- **Variant II**
-  - LightGBM, расширенные признаки
-  - XGBoost, расширенные признаки
-
-После завершения отдельных benchmark-задач DAG запускает финальный шаг постобработки, который формирует сводные таблицы с метриками по сценариям.
-
-### Зачем нужен отдельный DAG
-
-Использование benchmark DAG позволяет:
-
-- запускать все сценарии из единой точки;
-- обеспечивать воспроизводимость экспериментальной постановки;
-- получать согласованные CSV-артефакты для главы с экспериментальной оценкой;
-- не выполнять каждый benchmark вручную отдельной командой.
-
-### Как запустить benchmark DAG
-
-После старта контейнеров Airflow:
-
-```bash
-docker-compose up -d airflow-webserver airflow-scheduler
-```
-можно проверить наличие DAG:
-```bash
-docker-compose exec airflow-webserver airflow dags list | grep benchmark
+```text
+dags/aml_benchmark_dag.py
 ```
 
-Далее benchmark DAG можно запустить:
-```bash
-docker-compose exec airflow-webserver airflow dags trigger aml_benchmark_dag
-```
-или через Airflow UI:
-```
-http://localhost:8080
-```
+Типовые сценарии включают:
 
+- сравнение LightGBM и XGBoost;
+- сравнение исходного и расширенного признакового пространства;
+- проверку на `Base`, `Variant I`, `Variant II`;
+- дополнительную AML-ориентированную проверку на SAML-D.
+
+Benchmark DAG позволяет запускать все сценарии из единой точки, фиксировать постановку эксперимента и получать согласованные CSV/JSON-артефакты для анализа результатов.
 
 ## Эксперименты в MLflow
 
@@ -243,98 +221,79 @@ MLflow используется для логирования запусков, 
 
 ![mlflow](https://github.com/MaxKots/HSE_AML_MLOps_pipeline/blob/main/.assets/3.jpg)
 
+В MLflow фиксируются:
+
+- параметры запуска;
+- выбранный датасет;
+- источник данных;
+- тип модели;
+- метрики качества;
+- модельные артефакты;
+- сопутствующие файлы эксперимента.
+
+## Метрики
+
+Проект рассчитывает метрики бинарной классификации и риск-ориентированного ранжирования:
+
+- ROC-AUC;
+- PR-AUC;
+- Precision;
+- Recall;
+- F1-score;
+- FPR;
+- alert rate;
+- Precision@k;
+- Recall@k;
+- Lift@k.
+
+Метрики верхней части очереди используются для оценки способности модели формировать приоритетный список операций для последующего аналитического разбора.
+
 ## Основные артефакты
 
-После выполнения пайплайна сохраняются:
+После выполнения пайплайнов сохраняются:
 
-- обработанные датасеты: `data/processed/`
-- drift-отчёты: `artifacts/reports/`
-- feature spec: `artifacts/metrics/feature_spec.yaml`
-- training summary: `artifacts/metrics/training_summary.json`
-- model bundles: `artifacts/models/`
-- SHAP-артефакты: `artifacts/shap/`
-- prediction logs: `artifacts/predictions/`
-
-## Основные сценарии
-
-Проверка данных:
-
-```bash
-python scripts/run_data_check.py
-```
-
-Обучение:
-
-```bash
-python scripts/run_train.py
-```
-
-Запуск API:
-
-```bash
-python scripts/run_api.py
-```
-
-Запуск dashboard:
-
-```bash
-python scripts/run_dashboard.py
-```
-
-Проверка Airflow DAG:
-
-```bash
-docker-compose exec airflow-webserver airflow dags list
-```
+- обработанные датасеты: `data/processed/`;
+- drift-отчёты: `artifacts/reports/`;
+- feature spec: `artifacts/metrics/feature_spec.yaml`;
+- training summary: `artifacts/metrics/training_summary.json`;
+- benchmark results: `artifacts/metrics/benchmark_results.csv`;
+- model bundles: `artifacts/models/`;
+- SHAP-артефакты: `artifacts/shap/`;
+- prediction logs: `artifacts/predictions/`.
 
 ## SHAP-отчёты
 
-Запускать из корня проекта:
-
-```bash
-cd /home/max/HSE_AML_MLOps_pipeline
-source .venv/bin/activate
-python -m pip install -r requirements-dev.txt
-```
-
-Variant II:
-
-```bash
-PYTHONPATH=. python scripts/run_shap_variant_2.py
-```
-
-SynthAML:
-
-```bash
-PYTHONPATH=. python scripts/run_shap_synthaml.py
-```
-
-Только одна модель:
-
-```bash
-PYTHONPATH=. MODEL_TYPES=lightgbm python scripts/run_shap_synthaml.py
-PYTHONPATH=. MODEL_TYPES=xgboost python scripts/run_shap_synthaml.py
-```
-
-Настройка выборки и числа признаков:
-
-```bash
-PYTHONPATH=. TOP_N_FOR_SHAP=500 TOP_FEATURES=15 python scripts/run_shap_synthaml.py
-```
-
-Результаты сохраняются в:
+SHAP используется для интерпретации факторов, повлиявших на риск-скор модели. Артефакты сохраняются в:
 
 ```text
 artifacts/shap/
 ```
 
-Пример отчета:
+Пример отчёта:
+
 ![shap](https://github.com/MaxKots/HSE_AML_MLOps_pipeline/blob/main/.assets/shap_example.png)
 
+## API
+
+FastAPI предоставляет сервисный слой для online и batch scoring.
+
+Документация после запуска доступна по адресу:
+
+```text
+http://localhost:8000/docs
+```
+
+API возвращает риск-скор, рекомендацию и, при наличии соответствующего сценария, интерпретирующие факторы.
+
+## Ограничения
+
+Проект является исследовательским прототипом. Используемые открытые наборы данных не заменяют реальные банковские данные в контуре ПОД/ФТ. Результаты модели следует рассматривать как риск-скор и инструмент предварительной приоритизации операций, а не как автоматическое юридически значимое решение.
+
+Полноценная ролевая модель доступа, промышленный аудит действий пользователей, расширенное нагрузочное тестирование API и автономное продвижение новой версии модели в рабочий контур рассматриваются как направления дальнейшего развития.
 
 ## Полезные ссылки
 
-- полный гайд по установке и запуску: `SETUP.md`
+- полный гайд по установке и запуску: `docs/setup.md`
 - API docs после запуска: `http://localhost:8000/docs`
 - Airflow UI после запуска: `http://localhost:8080`
 - MLflow UI после запуска: `http://localhost:5000`

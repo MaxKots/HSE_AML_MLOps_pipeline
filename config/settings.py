@@ -22,15 +22,18 @@ class Settings(BaseSettings):
     base_dataset_path: str = Field(default="data/raw/Base.csv", alias="BASE_DATASET_PATH")
     drift_dataset_path_1: str = Field(default="data/raw/Variant I.csv", alias="DRIFT_DATASET_PATH_1")
     drift_dataset_path_2: str = Field(default="data/raw/Variant II.csv", alias="DRIFT_DATASET_PATH_2")
-
-    # Старые SynthAML-пути оставлены для обратной совместимости.
     synthaml_alerts_path: str = Field(default="data/raw/synthaml_alerts.csv", alias="SYNTHAML_ALERTS_PATH")
     synthaml_transactions_path: str = Field(default="data/raw/synthaml_transactions.csv", alias="SYNTHAML_TRANSACTIONS_PATH")
+    
+    samld_dataset_path: str = Field(
+        default="data/raw/SAML-D.csv",
+        alias="SAMLD_DATASET_PATH",
+    )
 
-    # SAML-D: Kaggle synthetic transaction monitoring dataset.
-    samld_dataset_path: str = Field(default="data/raw/SAML-D.csv", alias="SAMLD_DATASET_PATH")
-    # 0 означает использовать весь файл. Для быстрой апробации можно задать, например, 500000.
-    samld_max_rows: int = Field(default=0, alias="SAMLD_MAX_ROWS")
+    samld_max_rows: int = Field(
+        default=0,
+        alias="SAMLD_MAX_ROWS",
+    )
 
     target_column: str = Field(default="fraud_bool", alias="TARGET_COLUMN")
     random_seed: int = Field(default=42, alias="RANDOM_SEED")
@@ -48,10 +51,20 @@ class Settings(BaseSettings):
     minio_access_key: str = Field(default="minioadmin", alias="MINIO_ACCESS_KEY")
     minio_secret_key: str = Field(default="minioadmin", alias="MINIO_SECRET_KEY")
     minio_bucket: str = Field(default="mlflow", alias="MINIO_BUCKET")
+    minio_data_bucket: str = Field(default="aml-data", alias="MINIO_DATA_BUCKET")
+
+    data_sources_config_path: str = Field(default="config/data_sources.yaml", alias="DATA_SOURCES_CONFIG_PATH")
+    default_data_source: str = Field(default="csv", alias="DEFAULT_DATA_SOURCE")
+
+    airflow_api_url: str = Field(default="http://localhost:8080", alias="AIRFLOW_API_URL")
+    airflow_username: str = Field(default="admin", alias="AIRFLOW_USERNAME")
+    airflow_password: str = Field(default="admin", alias="AIRFLOW_PASSWORD")
 
     api_host: str = Field(default="0.0.0.0", alias="API_HOST")
     api_port: int = Field(default=8000, alias="API_PORT")
     dashboard_api_url: str = Field(default="http://localhost:8000", alias="DASHBOARD_API_URL")
+
+
 
     @property
     def project_root(self) -> Path:

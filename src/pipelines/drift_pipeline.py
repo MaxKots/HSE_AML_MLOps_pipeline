@@ -14,11 +14,19 @@ logger = get_logger(__name__)
 def run_drift_pipeline(
     reference_dataset_name: str = "base",
     current_dataset_name: str = "variant_1",
+    source: str | None = None,
+    reference_source: str | None = None,
+    current_source: str | None = None,
 ) -> dict[str, Any]:
     ensure_directories()
 
+    reference_source = reference_source or source
+    current_source = current_source or source
+
     logger.info(
-        f"Запуск drift pipeline: reference='{reference_dataset_name}', current='{current_dataset_name}'"
+        "Запуск drift pipeline: "
+        f"reference='{reference_dataset_name}' source='{reference_source or 'config/default'}', "
+        f"current='{current_dataset_name}' source='{current_source or 'config/default'}'"
     )
 
     loader = DataLoader()
@@ -27,8 +35,8 @@ def run_drift_pipeline(
     feature_engineer = FeatureEngineer()
     drift_detector = AMLDriftDetector()
 
-    reference_df = loader.load_dataset(reference_dataset_name)
-    current_df = loader.load_dataset(current_dataset_name)
+    reference_df = loader.load_dataset(reference_dataset_name, source_override=reference_source)
+    current_df = loader.load_dataset(current_dataset_name, source_override=current_source)
 
     validator.run_full_validation(reference_df)
     validator.run_full_validation(current_df)
@@ -48,6 +56,9 @@ def run_drift_pipeline(
     summary = {
         "reference_dataset_name": reference_dataset_name,
         "current_dataset_name": current_dataset_name,
+        "source": source or "config/default",
+        "reference_source": reference_source or "config/default",
+        "current_source": current_source or "config/default",
         "drift_detected": result.drift_detected,
         "share_of_drifted_columns": result.share_of_drifted_columns,
         "number_of_drifted_columns": result.number_of_drifted_columns,

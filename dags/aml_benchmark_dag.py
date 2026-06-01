@@ -12,6 +12,7 @@ import numpy as np
 import pandas as pd
 from airflow.decorators import dag, task
 from airflow.operators.empty import EmptyOperator
+from airflow.operators.python import get_current_context
 
 from config.settings import settings
 from src.data import DataLoader, DataTransformer, DataValidator
@@ -305,8 +306,9 @@ def load_and_prepare_main_dataset(
     dataset_name: str,
     feature_set: str,
     cache: dict[str, tuple[pd.DataFrame, list[str], list[str]]],
+    source_override: str | None = None,
 ) -> tuple[pd.DataFrame, list[str], list[str]]:
-    cache_key = f"{dataset_name}:{feature_set}"
+    cache_key = f"{dataset_name}:{feature_set}:{source_override or 'config/default'}"
 
     if cache_key in cache:
         return cache[cache_key]
@@ -316,7 +318,7 @@ def load_and_prepare_main_dataset(
     transformer = DataTransformer()
     feature_engineer = FeatureEngineer()
 
-    raw_df = loader.load_dataset(dataset_name)
+    raw_df = loader.load_dataset(dataset_name, source_override=source_override)
     validator.run_full_validation(raw_df)
 
     transformed_df = transformer.transform(raw_df)
@@ -343,14 +345,15 @@ def load_and_prepare_main_dataset(
 
 def load_and_prepare_samld_dataset(
     cache: dict[str, tuple[pd.DataFrame, list[str], list[str]]],
+    source_override: str | None = None,
 ) -> tuple[pd.DataFrame, list[str], list[str]]:
-    cache_key = "samld:prepared"
+    cache_key = f"samld:prepared:{source_override or 'config/default'}"
 
     if cache_key in cache:
         return cache[cache_key]
 
     loader = DataLoader()
-    raw_df = loader.load_dataset("samld")
+    raw_df = loader.load_dataset("samld", source_override=source_override)
 
     if settings.samld_max_rows and settings.samld_max_rows > 0:
         raw_df = raw_df.head(settings.samld_max_rows).copy()
@@ -369,16 +372,23 @@ def load_and_prepare_dataset(
     dataset_name: str,
     feature_set: str,
     cache: dict[str, tuple[pd.DataFrame, list[str], list[str]]],
+    source_override: str | None = None,
 ) -> tuple[pd.DataFrame, list[str], list[str]]:
     if dataset_name == "samld":
-        return load_and_prepare_samld_dataset(cache)
+        return load_and_prepare_samld_dataset(cache, source_override=source_override)
 
-    return load_and_prepare_main_dataset(dataset_name, feature_set, cache)
+    return load_and_prepare_main_dataset(
+        dataset_name,
+        feature_set,
+        cache,
+        source_override=source_override,
+    )
 
 
 def get_evaluation_dataframe(
     job: dict[str, Any],
     cache: dict[str, tuple[pd.DataFrame, list[str], list[str]]],
+    source_override: str | None = None,
 ) -> pd.DataFrame:
     eval_dataset_name = str(job["eval_dataset_name"])
     feature_set = str(job["feature_set"])
@@ -388,6 +398,7 @@ def get_evaluation_dataframe(
         dataset_name=eval_dataset_name,
         feature_set=feature_set,
         cache=cache,
+        source_override=source_override,
     )
 
     if evaluation_mode == "held_out_test":
@@ -529,14 +540,20 @@ def threshold_modes_file_for_job(job: dict[str, Any]) -> Path:
 
 
 @task(task_id="run_benchmark_job")
-def run_benchmark_job_task(job: dict[str, Any]) -> dict[str, Any]:
+def run_benchmark_job_task(job: dict[str, Any], runtime_config: dict | None = None) -> dict[str, Any]:
     ensure_directories()
     configure_benchmark_mlflow()
 
     METRICS_DIR.mkdir(parents=True, exist_ok=True)
     BENCHMARK_MODELS_DIR.mkdir(parents=True, exist_ok=True)
 
-    logger.info(f"Запуск benchmark job: {job['job_id']}")
+    runtime_config = runtime_config or {}
+    source_override = runtime_config.get("source")
+
+    logger.info(
+        f"Запуск benchmark job: {job['job_id']}; "
+        f"source={source_override or 'config/default'}"
+    )
 
     cache: dict[str, tuple[pd.DataFrame, list[str], list[str]]] = {}
 
@@ -544,6 +561,7 @@ def run_benchmark_job_task(job: dict[str, Any]) -> dict[str, Any]:
         dataset_name=str(job["train_dataset_name"]),
         feature_set=str(job["feature_set"]),
         cache=cache,
+        source_override=source_override,
     )
 
     train_rows, valid_rows, _ = split_counts(len(train_df))
@@ -581,7 +599,7 @@ def run_benchmark_job_task(job: dict[str, Any]) -> dict[str, Any]:
         y_valid_proba=y_valid_proba,
     )
 
-    eval_df = get_evaluation_dataframe(job, cache)
+    eval_df = get_evaluation_dataframe(job, cache, source_override=source_override)
 
     start_inference = time.perf_counter()
     prediction_df = predictor.predict_proba(eval_df)
@@ -901,7 +919,10 @@ def build_benchmark_tables_task() -> dict[str, Any]:
 
 
 @task(task_id="measure_inference_time")
-def measure_inference_time_task(repeats: int = 3) -> dict[str, Any]:
+def measure_inference_time_task(runtime_config: dict | None = None, repeats: int = 3) -> dict[str, Any]:
+    runtime_config = runtime_config or {}
+    source_override = runtime_config.get("source")
+
     input_path = METRICS_DIR / "benchmark_results_all.csv"
 
     if not input_path.exists():
@@ -926,7 +947,7 @@ def measure_inference_time_task(repeats: int = 3) -> dict[str, Any]:
         if not bundle_path.exists():
             raise FileNotFoundError(f"Не найден bundle модели: {bundle_path}")
 
-        eval_df = get_evaluation_dataframe(job, cache)
+        eval_df = get_evaluation_dataframe(job, cache, source_override=source_override)
         predictor = AMLPredictor(str(bundle_path))
 
         warmup_size = min(1000, len(eval_df))
@@ -1043,23 +1064,41 @@ default_args = {
     schedule=None,
     catchup=False,
     tags=["aml", "benchmark", "mlops"],
+    params={"source": "csv"},
 )
 def aml_benchmark_dag():
     start = EmptyOperator(task_id="start")
     finish = EmptyOperator(task_id="finish")
 
+    @task(task_id="read_runtime_config")
+    def read_runtime_config_task() -> dict:
+        context = get_current_context()
+        dag_run = context.get("dag_run")
+        params = context.get("params") or {}
+        conf = dag_run.conf if dag_run and dag_run.conf else {}
+
+        runtime_config = {
+            "source": conf.get("source") or params.get("source") or "csv",
+        }
+        logger.info(f"Runtime-конфигурация benchmark прочитана: {runtime_config}")
+        return runtime_config
+
+    runtime_config = read_runtime_config_task()
+
     previous_task = start
+    start >> runtime_config
+    previous_task = runtime_config
 
     for index, job in enumerate(BENCHMARK_JOBS, start=1):
         benchmark_task = run_benchmark_job_task.override(
             task_id=f"benchmark_{index}_{job['job_id']}"
-        )(job)
+        )(job, runtime_config)
 
         previous_task >> benchmark_task
         previous_task = benchmark_task
 
     build_tables = build_benchmark_tables_task()
-    measure_inference = measure_inference_time_task()
+    measure_inference = measure_inference_time_task(runtime_config)
 
     previous_task >> build_tables >> measure_inference >> finish
 
