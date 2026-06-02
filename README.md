@@ -184,6 +184,10 @@ docker-compose up -d
 - Dashboard: `http://localhost:8501`
 - MinIO: `http://localhost:9001`
 
+## Пример Evedently отчета по мониторингу дрейфа данных  
+
+![schema](https://github.com/MaxKots/HSE_AML_MLOps_pipeline/blob/main/.assets/4.jpg)
+
 ## Интерфейс dashboard
 
 ![streamlit](https://github.com/MaxKots/HSE_AML_MLOps_pipeline/blob/main/.assets/1.jpg)
